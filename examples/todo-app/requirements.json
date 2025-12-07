@@ -1,0 +1,356 @@
+{
+  "version": "1.0",
+  "config": {
+    "testRunners": [
+      {
+        "name": "unit",
+        "command": "bun test",
+        "pattern": "tests/**/*.test.ts"
+      }
+    ]
+  },
+  "requirements": {
+    "REQ-001": {
+      "description": "User can add a new todo item with a title",
+      "source": {
+        "type": "doc",
+        "reference": "specs/todo-crud.md",
+        "capturedAt": "2024-01-15T10:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "addTodo creates a new todo",
+          "linkedAt": "2024-01-15T10:30:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "addTodo trims whitespace from title",
+          "linkedAt": "2024-01-15T10:31:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-15T10:00:00.000Z",
+          "by": "Alice"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-15T10:30:00.000Z",
+          "note": "Linked tests for add functionality"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-002": {
+      "description": "Empty todo titles should be rejected",
+      "source": {
+        "type": "doc",
+        "reference": "specs/todo-crud.md",
+        "capturedAt": "2024-01-15T10:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "addTodo throws on empty title",
+          "linkedAt": "2024-01-15T11:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "updateTodoTitle throws on empty title",
+          "linkedAt": "2024-01-15T11:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-15T10:00:00.000Z",
+          "by": "Alice"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-15T11:00:00.000Z",
+          "note": "Linked validation tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-003": {
+      "description": "User can mark a todo as completed",
+      "source": {
+        "type": "doc",
+        "reference": "specs/todo-crud.md",
+        "capturedAt": "2024-01-15T10:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "completeTodo marks todo as completed",
+          "linkedAt": "2024-01-16T09:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "completeTodo is idempotent",
+          "linkedAt": "2024-01-16T09:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-15T10:00:00.000Z",
+          "by": "Alice"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-16T09:00:00.000Z",
+          "note": "Linked completion tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-004": {
+      "description": "User can unmark a completed todo",
+      "source": {
+        "type": "doc",
+        "reference": "specs/todo-crud.md",
+        "capturedAt": "2024-01-15T10:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "uncompleteTodo marks todo as not completed",
+          "linkedAt": "2024-01-16T10:00:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-15T10:00:00.000Z",
+          "by": "Alice"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-16T10:00:00.000Z",
+          "note": "Linked uncomplete test"
+        }
+      ]
+    },
+    "REQ-005": {
+      "description": "User can delete a todo",
+      "source": {
+        "type": "doc",
+        "reference": "specs/todo-crud.md",
+        "capturedAt": "2024-01-15T10:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "deleteTodo removes a todo",
+          "linkedAt": "2024-01-16T11:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "deleteTodo returns false for non-existent id",
+          "linkedAt": "2024-01-16T11:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-15T10:00:00.000Z",
+          "by": "Alice"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-16T11:00:00.000Z",
+          "note": "Linked delete tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-006": {
+      "description": "User can filter todos by completion status",
+      "source": {
+        "type": "jira",
+        "reference": "TODO-42",
+        "capturedAt": "2024-01-17T09:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "listActiveTodos returns only active todos",
+          "linkedAt": "2024-01-17T10:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "listCompletedTodos returns only completed todos",
+          "linkedAt": "2024-01-17T10:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-17T09:00:00.000Z",
+          "by": "Bob"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-17T10:00:00.000Z",
+          "note": "Linked filter tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-007": {
+      "description": "User can clear all completed todos at once",
+      "source": {
+        "type": "jira",
+        "reference": "TODO-43",
+        "capturedAt": "2024-01-17T11:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "clearCompleted removes all completed todos",
+          "linkedAt": "2024-01-17T12:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "clearCompleted returns 0 when no completed todos",
+          "linkedAt": "2024-01-17T12:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-17T11:00:00.000Z",
+          "by": "Bob"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-17T12:00:00.000Z",
+          "note": "Linked bulk operation tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-008": {
+      "description": "User can view todo statistics (total, active, completed)",
+      "source": {
+        "type": "slack",
+        "reference": "#product-feedback",
+        "capturedAt": "2024-01-18T14:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "getStats returns correct counts",
+          "linkedAt": "2024-01-18T15:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "getStats returns zeros for empty store",
+          "linkedAt": "2024-01-18T15:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-18T14:00:00.000Z",
+          "by": "Carol",
+          "note": "From customer feedback"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-18T15:00:00.000Z",
+          "note": "Linked stats tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-009": {
+      "description": "User can edit a todo title",
+      "source": {
+        "type": "manual",
+        "reference": "",
+        "capturedAt": "2024-01-19T09:00:00.000Z"
+      },
+      "tests": [
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "updateTodoTitle changes the title",
+          "linkedAt": "2024-01-19T10:00:00.000Z"
+        },
+        {
+          "runner": "unit",
+          "file": "tests/todo.test.ts",
+          "identifier": "updateTodoTitle trims whitespace",
+          "linkedAt": "2024-01-19T10:01:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-19T09:00:00.000Z"
+        },
+        {
+          "action": "modified",
+          "timestamp": "2024-01-19T10:00:00.000Z",
+          "note": "Linked update tests"
+        }
+      ],
+      "lastVerified": "2024-01-20T09:00:00.000Z"
+    },
+    "REQ-010": {
+      "description": "Todo due dates and reminders",
+      "source": {
+        "type": "jira",
+        "reference": "TODO-50",
+        "capturedAt": "2024-01-20T09:00:00.000Z"
+      },
+      "tests": [],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-20T09:00:00.000Z",
+          "by": "Dave",
+          "note": "Feature request for v2"
+        }
+      ]
+    },
+    "REQ-011": {
+      "description": "Todo categories and tags",
+      "source": {
+        "type": "jira",
+        "reference": "TODO-51",
+        "capturedAt": "2024-01-20T09:30:00.000Z"
+      },
+      "tests": [],
+      "history": [
+        {
+          "action": "created",
+          "timestamp": "2024-01-20T09:30:00.000Z",
+          "by": "Dave",
+          "note": "Feature request for v2"
+        }
+      ]
+    }
+  }
+}

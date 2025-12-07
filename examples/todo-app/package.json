@@ -1,0 +1,14 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "req": "bun run ../../plugins/requirements-tracker/src/cli.ts",
+    "req:serve": "bun run ../../plugins/requirements-tracker/src/cli.ts serve",
+    "req:check": "bun run ../../plugins/requirements-tracker/src/cli.ts check"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

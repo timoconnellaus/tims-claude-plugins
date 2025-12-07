@@ -1,0 +1,10 @@
+{
+  "name": "requirements-tracker",
+  "version": "1.0.0",
+  "description": "Track project requirements with test verification, source tracking, and history",
+  "author": {
+    "name": "Tim"
+  },
+  "commands": "./commands",
+  "skills": "./skills"
+}

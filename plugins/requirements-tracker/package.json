@@ -1,0 +1,26 @@
+{
+  "name": "requirements-tracker",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "req": "./src/cli.ts"
+  },
+  "scripts": {
+    "serve": "bun run src/server/index.ts",
+    "dev": "bun --hot run src/server/index.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fuse.js": "^7.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  }
+}
