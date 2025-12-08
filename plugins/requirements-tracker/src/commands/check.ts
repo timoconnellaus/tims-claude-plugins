@@ -1,195 +1,170 @@
-import { loadRequirements, saveRequirements, requirementsFileExists } from "../lib/store";
-import { parseTestFiles } from "../lib/testParser";
-import type { CheckResult } from "../lib/types";
+/**
+ * Check test coverage for Linear issues
+ */
 
-const HELP = `
-Run verification checks on requirements.
+import { glob } from "glob";
+import { readFile } from "fs/promises";
+import { loadCache } from "../lib/store";
+import { PRIORITY_LABELS } from "../lib/types";
 
-USAGE:
-  bun req check [options]
-
-OPTIONS:
-  --coverage   Show requirements without tests
-  --orphans    Show tests not linked to any requirement
-  --run        Run tests and update verification status
-  --json       Output as JSON
-  --help, -h   Show this help message
-
-EXAMPLES:
-  bun req check
-  bun req check --coverage
-  bun req check --orphans
-  bun req check --run
-`.trim();
-
-interface ParsedArgs {
-  coverage: boolean;
-  orphans: boolean;
-  run: boolean;
-  json: boolean;
+interface ExtractedTest {
+  file: string;
+  identifier: string;
 }
 
-function parseArgs(args: string[]): ParsedArgs {
-  return {
-    coverage: args.includes("--coverage"),
-    orphans: args.includes("--orphans"),
-    run: args.includes("--run"),
-    json: args.includes("--json"),
-  };
+/**
+ * Extract test identifiers from a test file
+ */
+async function extractTests(filePath: string): Promise<ExtractedTest[]> {
+  const content = await readFile(filePath, "utf-8");
+  const tests: ExtractedTest[] = [];
+
+  // Match describe/it/test patterns
+  const patterns = [
+    /(?:describe|it|test)\s*\(\s*["'`]([^"'`]+)["'`]/g,
+    /Bun\.test\s*\(\s*["'`]([^"'`]+)["'`]/g,
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      tests.push({
+        file: filePath,
+        identifier: match[1],
+      });
+    }
+  }
+
+  return tests;
 }
 
-async function runTests(command: string): Promise<boolean> {
-  try {
-    const proc = Bun.spawn(command.split(" "), {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const exitCode = await proc.exited;
-    return exitCode === 0;
-  } catch {
-    return false;
-  }
-}
+export async function check(args: {
+  cwd: string;
+  coverage?: boolean;
+  orphans?: boolean;
+  json?: boolean;
+  testGlob?: string;
+}): Promise<void> {
+  const { cwd, coverage, orphans, json, testGlob = "**/*.test.{ts,js,tsx,jsx}" } = args;
 
-export async function check(args: string[]): Promise<void> {
-  if (args.includes("--help") || args.includes("-h")) {
-    console.log(HELP);
-    return;
+  // Load cache
+  const cache = await loadCache(cwd);
+  if (!cache) {
+    console.error("No cache found. Run 'req sync' first.");
+    process.exit(1);
   }
 
-  if (!requirementsFileExists()) {
-    throw new Error("requirements.json not found. Run 'bun req init' first.");
-  }
+  const { issues, testLinks } = cache;
 
-  const opts = parseArgs(args);
-  const showAll = !opts.coverage && !opts.orphans && !opts.run;
+  // Build lookup of issues with tests
+  const issuesWithTests = new Set(testLinks.map((l) => l.issueId));
 
-  const data = loadRequirements();
-  const result: CheckResult = {
-    requirementsWithoutTests: [],
-    testsWithoutRequirements: [],
-    passingRequirements: [],
-    failingRequirements: [],
-    untestedRequirements: [],
-  };
+  // Issues without tests
+  const uncovered = issues.filter((i) => !issuesWithTests.has(i.id));
 
-  // Find requirements without tests
-  for (const [id, req] of Object.entries(data.requirements)) {
-    if (req.tests.length === 0) {
-      result.requirementsWithoutTests.push(id);
-      result.untestedRequirements.push(id);
+  // For orphan detection, find all tests in codebase
+  let allTests: ExtractedTest[] = [];
+  let orphanTests: ExtractedTest[] = [];
+
+  if (orphans || !coverage) {
+    // Find test files
+    const testFiles = await glob(testGlob, { cwd, absolute: true });
+
+    for (const file of testFiles) {
+      const extracted = await extractTests(file);
+      allTests.push(...extracted);
     }
-  }
 
-  // Find orphan tests (tests not linked to any requirement)
-  if (showAll || opts.orphans) {
-    const allLinkedTests = new Set<string>();
-    for (const req of Object.values(data.requirements)) {
-      for (const test of req.tests) {
-        allLinkedTests.add(`${test.file}:${test.identifier}`);
+    // Build set of linked tests
+    const linkedTests = new Set<string>();
+    for (const link of testLinks) {
+      for (const test of link.tests) {
+        linkedTests.add(`${test.file}:${test.identifier}`);
       }
     }
 
-    // Parse test files to find all tests
-    for (const runner of data.config.testRunners) {
-      const testsInFiles = await parseTestFiles(runner.pattern);
-      for (const test of testsInFiles) {
-        const key = `${test.file}:${test.identifier}`;
-        if (!allLinkedTests.has(key)) {
-          result.testsWithoutRequirements.push({
-            runner: runner.name,
-            file: test.file,
-            identifier: test.identifier,
-          });
-        }
-      }
-    }
+    // Find orphans
+    orphanTests = allTests.filter(
+      (t) => !linkedTests.has(`${t.file}:${t.identifier}`)
+    );
   }
 
-  // Run tests if requested
-  if (opts.run) {
-    const reqsByRunner = new Map<string, string[]>();
+  // Output
+  if (json) {
+    const result: Record<string, unknown> = {
+      totalIssues: issues.length,
+      withTests: issuesWithTests.size,
+      withoutTests: uncovered.length,
+    };
 
-    for (const [id, req] of Object.entries(data.requirements)) {
-      for (const test of req.tests) {
-        const list = reqsByRunner.get(test.runner) ?? [];
-        if (!list.includes(id)) list.push(id);
-        reqsByRunner.set(test.runner, list);
-      }
+    if (coverage || (!coverage && !orphans)) {
+      result.uncovered = uncovered.map((i) => ({
+        identifier: i.identifier,
+        title: i.title,
+        priority: i.priority,
+        priorityLabel: PRIORITY_LABELS[i.priority],
+        state: i.state.name,
+        url: i.url,
+      }));
     }
 
-    for (const runner of data.config.testRunners) {
-      const reqIds = reqsByRunner.get(runner.name) ?? [];
-      if (reqIds.length === 0) continue;
-
-      console.log(`Running ${runner.name}: ${runner.command}`);
-      const passed = await runTests(runner.command);
-      const timestamp = new Date().toISOString();
-
-      for (const id of reqIds) {
-        if (passed) {
-          data.requirements[id].lastVerified = timestamp;
-          result.passingRequirements.push(id);
-        } else {
-          result.failingRequirements.push(id);
-        }
-      }
+    if (orphans || (!coverage && !orphans)) {
+      result.orphanTests = orphanTests.map((t) => ({
+        file: t.file,
+        identifier: t.identifier,
+      }));
+      result.totalTests = allTests.length;
+      result.orphanCount = orphanTests.length;
     }
 
-    saveRequirements(data);
-  }
-
-  // Output results
-  if (opts.json) {
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
-  if (showAll || opts.coverage) {
-    console.log("\n=== Coverage ===");
-    if (result.requirementsWithoutTests.length === 0) {
-      console.log("All requirements have tests linked.");
+  // Human-readable output
+  console.log(`\n=== Coverage Report (${cache.teamKey}) ===\n`);
+  console.log(`Total issues: ${issues.length}`);
+  console.log(`With tests: ${issuesWithTests.size}`);
+  console.log(`Without tests: ${uncovered.length}`);
+
+  if (coverage || (!coverage && !orphans)) {
+    if (uncovered.length > 0) {
+      console.log(`\n--- Issues Without Tests ---\n`);
+
+      // Sort by priority (1=Urgent is highest)
+      const sorted = [...uncovered].sort((a, b) => {
+        // 0 (no priority) should be last
+        const aPri = a.priority === 0 ? 5 : a.priority;
+        const bPri = b.priority === 0 ? 5 : b.priority;
+        return aPri - bPri;
+      });
+
+      for (const issue of sorted) {
+        const pri = PRIORITY_LABELS[issue.priority] || "No priority";
+        console.log(`  ${issue.identifier} [${pri}] ${issue.title}`);
+        console.log(`    State: ${issue.state.name}`);
+        console.log(`    ${issue.url}\n`);
+      }
     } else {
-      console.log("Requirements without tests:");
-      for (const id of result.requirementsWithoutTests) {
-        console.log(`  - ${id}: ${data.requirements[id].description}`);
+      console.log(`\nAll issues have linked tests.`);
+    }
+  }
+
+  if (orphans || (!coverage && !orphans)) {
+    console.log(`\n--- Orphan Tests ---\n`);
+    console.log(`Total tests found: ${allTests.length}`);
+    console.log(`Orphan tests: ${orphanTests.length}`);
+
+    if (orphanTests.length > 0) {
+      console.log();
+      for (const test of orphanTests.slice(0, 20)) {
+        console.log(`  ${test.file}:${test.identifier}`);
+      }
+      if (orphanTests.length > 20) {
+        console.log(`  ... and ${orphanTests.length - 20} more`);
       }
     }
   }
 
-  if (showAll || opts.orphans) {
-    console.log("\n=== Orphan Tests ===");
-    if (result.testsWithoutRequirements.length === 0) {
-      console.log("All tests are linked to requirements.");
-    } else {
-      console.log("Tests not linked to any requirement:");
-      for (const test of result.testsWithoutRequirements) {
-        console.log(`  - ${test.file}:${test.identifier} (${test.runner})`);
-      }
-    }
-  }
-
-  if (opts.run) {
-    console.log("\n=== Test Results ===");
-    console.log(`Passing: ${result.passingRequirements.length}`);
-    console.log(`Failing: ${result.failingRequirements.length}`);
-
-    if (result.failingRequirements.length > 0) {
-      console.log("\nFailing requirements:");
-      for (const id of result.failingRequirements) {
-        console.log(`  - ${id}: ${data.requirements[id].description}`);
-      }
-    }
-  }
-
-  // Summary
-  if (showAll) {
-    const total = Object.keys(data.requirements).length;
-    const withTests = total - result.requirementsWithoutTests.length;
-    console.log("\n=== Summary ===");
-    console.log(`Total requirements: ${total}`);
-    console.log(`With tests: ${withTests}`);
-    console.log(`Without tests: ${result.requirementsWithoutTests.length}`);
-    console.log(`Orphan tests: ${result.testsWithoutRequirements.length}`);
-  }
+  console.log();
 }

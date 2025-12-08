@@ -1,7 +1,7 @@
 {
   "name": "requirements-tracker",
-  "version": "1.0.0",
-  "description": "Track project requirements with test verification, source tracking, and history",
+  "version": "2.0.0",
+  "description": "Track Linear issues with test coverage verification",
   "author": {
     "name": "Tim"
   },

@@ -1,25 +1,40 @@
-# Requirements Tracker
+# Requirements Tracker (Linear)
 
-Manage project requirements with test verification.
+Track test coverage against Linear issues.
 
 ## Usage
 
-Pass arguments directly to the CLI:
-
 ```bash
-bun run ${CLAUDE_PLUGIN_ROOT}/src/cli.ts $ARGUMENTS
+req $ARGUMENTS
 ```
 
-## Available Commands
+## Commands
 
-- `init` - Initialize requirements.json
-- `add <description>` - Add a new requirement
-- `list` - List all requirements
-- `link <id> <file:identifier>` - Link a test to a requirement
-- `unlink <id> <file:identifier>` - Unlink a test
-- `check` - Run verification checks
-- `archive <id>` - Archive a requirement
-- `restore <id>` - Restore an archived requirement
-- `history <id>` - Show requirement history
+- `init` - Connect to Linear, select team/project
+- `sync` - Fetch issues from Linear
+- `list` - List issues (supports filtering)
+- `link <issue> <file:identifier>` - Link test to issue
+- `unlink <issue> <file:identifier>` - Remove test link
+- `check` - Check test coverage
 
-Run any command with `--help` for more options.
+## Examples
+
+```bash
+# Setup
+req init
+
+# Sync from Linear
+req sync
+
+# Show issues without tests
+req list --coverage without
+
+# Link a test
+req link ENG-123 src/auth.test.ts:validates login
+
+# Check coverage
+req check --coverage
+req check --orphans
+```
+
+Run any command with `--help` for options.

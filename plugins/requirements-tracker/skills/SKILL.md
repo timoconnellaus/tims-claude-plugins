@@ -1,71 +1,83 @@
 ---
 name: requirements-tracker
-description: Track project requirements with test coverage verification, tags, priorities, and status. Use when working with requirements tracking, linking tests to requirements, finding untested requirements or orphan tests, filtering by priority/status/tags, or verifying test coverage. Triggers on questions like "what requirements need tests?", "show critical requirements", "filter by tag", "set priority", or "verify requirements".
+description: Track Linear issues with test coverage verification. Use when linking tests to Linear issues, finding issues without tests, checking test coverage, or syncing from Linear. Triggers on questions like "what issues need tests?", "sync from Linear", "link test to issue", or "check coverage".
 ---
 
-# Requirements Tracker
+# Requirements Tracker (Linear-backed)
 
-CLI tool for tracking requirements with test coverage, tags, priorities, and lifecycle status. Data stored in `requirements.json` at project root.
+CLI tool for tracking test coverage against Linear issues. Issues are synced from Linear; test links are stored as structured comments on the issues.
+
+## Setup
+
+```bash
+# Set API key (or enter during init)
+export LINEAR_API_KEY=lin_api_xxx
+
+# Initialize - picks team/project
+req init
+```
 
 ## Commands
 
-Run via: `bun run ${CLAUDE_PLUGIN_ROOT}/src/cli.ts --cwd <project-root> <command>`
-
-Always use `--cwd` to specify the target project directory for reliable operation.
+Run via: `req <command>` (or use `--cwd <path>` for a different directory)
 
 | Command | Purpose |
 |---------|---------|
-| `init --runner "name:cmd:pattern"` | Initialize with test runner config |
-| `add "description" [options]` | Add requirement with optional tags, priority, status |
-| `list [options]` | List/filter requirements by tags, priority, status, search |
-| `link <REQ-ID> <file:identifier>` | Link test to requirement |
-| `check [--coverage] [--orphans] [--run]` | Check coverage, find orphans, run tests |
-| `tag <REQ-ID> --add/--remove <tag>` | Manage tags |
-| `set <REQ-ID> --priority/--status <value>` | Set priority or status |
-| `archive <REQ-ID>` / `restore <REQ-ID>` | Archive/restore requirements |
-| `history <REQ-ID>` | Show requirement history |
+| `init` | Connect to Linear, select team/project |
+| `sync` | Fetch issues from Linear to local cache |
+| `list [options]` | List issues with filtering |
+| `link <ISSUE> <file:identifier>` | Link test to Linear issue |
+| `unlink <ISSUE> <file:identifier>` | Remove test link |
+| `check [--coverage] [--orphans]` | Check test coverage |
 
-## Requirement Metadata
-
-Each requirement can have:
-- **Tags**: Flat labels like `auth`, `security`, `v2`, `api`
-- **Priority**: `critical`, `high`, `medium` (default), `low`
-- **Status**: `draft` (default), `approved`, `implemented`, `released`
-
-## Filtering Examples
+## Examples
 
 ```bash
-# Find all critical priority requirements
-list --priority critical
+# Sync issues from Linear
+req sync
 
-# Find requirements with "auth" tag
-list --tag auth
+# List all issues without tests
+req list --coverage without
 
-# Find requirements with both "auth" AND "security" tags
-list --tag auth --tag security --all-tags
+# List urgent/high priority issues
+req list --priority urgent
+req list --priority high
 
-# Find approved requirements that are high priority
-list --priority high --req-status approved
+# Search for issues
+req list --search "authentication"
 
-# Search for requirements mentioning "login"
-list --search login
+# Link a test to an issue
+req link ENG-123 src/auth.test.ts:validates login credentials
+
+# Check which issues lack tests
+req check --coverage
+
+# Find orphan tests (not linked to any issue)
+req check --orphans
 ```
 
-## Key Types
+## How Test Links Work
 
-See `src/lib/types.ts`. Key fields:
-- `Requirement.tags[]` - flat list of string labels
-- `Requirement.priority` - critical/high/medium/low
-- `Requirement.status` - draft/approved/implemented/released
-- `Requirement.tests[]` - linked tests with runner, file, identifier
-- `Requirement.source` - origin tracking (type + reference)
-- `Requirement.history[]` - audit trail of changes
+When you link a test, a comment is added to the Linear issue:
 
-## Verification Workflow
+```
+**Test Coverage**
+- `src/auth.test.ts:validates login credentials`
+- `src/auth.test.ts:handles invalid password`
 
-When verifying test coverage for a requirement:
+<!-- req-tests:[{"file":"src/auth.test.ts","identifier":"validates login credentials",...}] -->
+```
 
-1. Read the requirement from `requirements.json` or via `list --json`
-2. Read each linked test file to understand what it validates
-3. Compare requirement description with actual test assertions
-4. Report: missing cases, tests that don't validate the requirement, improvements needed
+The human-readable list is visible in Linear. The HTML comment stores machine-readable data for the CLI.
+
+## Files
+
+- `.requirements.json` - Config (team ID, project ID, optional API key)
+- `.requirements-cache.json` - Local cache of Linear issues and test links
+
+## Workflow
+
+1. `req init` - One-time setup to connect to Linear
+2. `req sync` - Fetch current issues (run periodically)
+3. `req link` - Link tests as you write them
+4. `req check` - Review coverage before releases

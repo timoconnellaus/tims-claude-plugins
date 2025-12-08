@@ -1,147 +1,122 @@
-import { existsSync, readFileSync, writeFileSync } from "fs";
+/**
+ * Local storage for config and cache
+ */
+
+import { readFile, writeFile, access } from "fs/promises";
 import { join } from "path";
-import type {
-  RequirementsFile,
-  ArchiveFile,
-  Requirement,
-  HistoryEntry,
-  GitHubIssue,
+import {
+  RequirementsConfig,
+  LocalCache,
+  CONFIG_FILE,
+  CACHE_FILE,
 } from "./types";
 
-// Old GitHubIssue format for migration
-interface LegacyGitHubIssue {
-  url: string;
-  number: number;
-  repo?: string;
-}
-
-const REQUIREMENTS_FILE = "requirements.json";
-const ARCHIVE_FILE = "requirements.archive.json";
-const VERSION = "1.0";
-
-function getFilePath(filename: string, cwd: string = process.cwd()): string {
-  return join(cwd, filename);
-}
-
-function createEmptyRequirementsFile(): RequirementsFile {
-  return {
-    version: VERSION,
-    config: {
-      testRunners: [],
-    },
-    requirements: {},
-  };
-}
-
-function createEmptyArchiveFile(): ArchiveFile {
-  return {
-    version: VERSION,
-    requirements: {},
-  };
+/**
+ * Get the config file path
+ */
+export function getConfigPath(cwd: string): string {
+  return join(cwd, CONFIG_FILE);
 }
 
 /**
- * Migrate old URL-based GitHubIssue format to number-only format.
- * Also extracts repo to config if not already set.
+ * Get the cache file path
  */
-function migrateGitHubIssues(data: RequirementsFile): RequirementsFile {
-  let modified = false;
-  let extractedRepo: string | undefined;
+export function getCachePath(cwd: string): string {
+  return join(cwd, CACHE_FILE);
+}
 
-  for (const req of Object.values(data.requirements)) {
-    if (req.githubIssue && "url" in req.githubIssue) {
-      const legacy = req.githubIssue as unknown as LegacyGitHubIssue;
-
-      // Extract repo from legacy format if available and config doesn't have it
-      if (legacy.repo && !extractedRepo && !data.config.github?.repo) {
-        extractedRepo = legacy.repo;
-      }
-
-      // Convert to new format
-      const newIssue: GitHubIssue = { number: legacy.number };
-      req.githubIssue = newIssue;
-      modified = true;
-    }
+/**
+ * Check if config exists
+ */
+export async function configExists(cwd: string): Promise<boolean> {
+  try {
+    await access(getConfigPath(cwd));
+    return true;
+  } catch {
+    return false;
   }
+}
 
-  // Set extracted repo in config if found
-  if (extractedRepo && !data.config.github?.repo) {
-    data.config.github = { repo: extractedRepo, autoDetected: false };
-    modified = true;
+/**
+ * Load config from disk
+ */
+export async function loadConfig(cwd: string): Promise<RequirementsConfig | null> {
+  try {
+    const content = await readFile(getConfigPath(cwd), "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return null;
   }
-
-  return data;
 }
 
-export function loadRequirements(cwd?: string): RequirementsFile {
-  const filePath = getFilePath(REQUIREMENTS_FILE, cwd);
+/**
+ * Save config to disk
+ */
+export async function saveConfig(
+  cwd: string,
+  config: RequirementsConfig
+): Promise<void> {
+  await writeFile(getConfigPath(cwd), JSON.stringify(config, null, 2) + "\n");
+}
 
-  if (!existsSync(filePath)) {
-    return createEmptyRequirementsFile();
+/**
+ * Load cache from disk
+ */
+export async function loadCache(cwd: string): Promise<LocalCache | null> {
+  try {
+    const content = await readFile(getCachePath(cwd), "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return null;
   }
-
-  const content = readFileSync(filePath, "utf-8");
-  let data = JSON.parse(content) as RequirementsFile;
-
-  // Run migrations
-  data = migrateGitHubIssues(data);
-
-  return data;
 }
 
-export function saveRequirements(data: RequirementsFile, cwd?: string): void {
-  const filePath = getFilePath(REQUIREMENTS_FILE, cwd);
-  writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+/**
+ * Save cache to disk
+ */
+export async function saveCache(cwd: string, cache: LocalCache): Promise<void> {
+  await writeFile(getCachePath(cwd), JSON.stringify(cache, null, 2) + "\n");
 }
 
-export function loadArchive(cwd?: string): ArchiveFile {
-  const filePath = getFilePath(ARCHIVE_FILE, cwd);
-
-  if (!existsSync(filePath)) {
-    return createEmptyArchiveFile();
+/**
+ * Get API key from config or environment
+ */
+export function getApiKey(config: RequirementsConfig | null): string | null {
+  // Environment variable takes precedence
+  if (process.env.LINEAR_API_KEY) {
+    return process.env.LINEAR_API_KEY;
   }
-
-  const content = readFileSync(filePath, "utf-8");
-  return JSON.parse(content) as ArchiveFile;
+  return config?.linearApiKey ?? null;
 }
 
-export function saveArchive(data: ArchiveFile, cwd?: string): void {
-  const filePath = getFilePath(ARCHIVE_FILE, cwd);
-  writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+/**
+ * Check if cache is stale (older than maxAge minutes)
+ */
+export function isCacheStale(cache: LocalCache | null, maxAgeMinutes = 5): boolean {
+  if (!cache) return true;
+
+  const lastSync = new Date(cache.lastSync);
+  const now = new Date();
+  const diffMinutes = (now.getTime() - lastSync.getTime()) / 1000 / 60;
+
+  return diffMinutes > maxAgeMinutes;
 }
 
-export function generateId(requirements: Record<string, Requirement>): string {
-  const existingIds = Object.keys(requirements);
-  const numbers = existingIds
-    .map((id) => {
-      const match = id.match(/^REQ-(\d+)$/);
-      return match ? parseInt(match[1], 10) : 0;
-    })
-    .filter((n) => n > 0);
-
-  const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0;
-  const nextNum = maxNum + 1;
-  return `REQ-${String(nextNum).padStart(3, "0")}`;
+/**
+ * Check if config is in local mode
+ */
+export function isLocalMode(config: RequirementsConfig | null): boolean {
+  return config?.mode === "local";
 }
 
-export function createHistoryEntry(
-  action: HistoryEntry["action"],
-  note?: string,
-  by?: string
-): HistoryEntry {
+/**
+ * Generate next local issue ID
+ */
+export function generateLocalId(config: RequirementsConfig): { id: string; identifier: string } {
+  const prefix = config.prefix || "REQ";
+  const num = config.nextId || 1;
   return {
-    action,
-    timestamp: new Date().toISOString(),
-    ...(by && { by }),
-    ...(note && { note }),
+    id: crypto.randomUUID(),
+    identifier: `${prefix}-${String(num).padStart(3, "0")}`,
   };
-}
-
-export function requirementsFileExists(cwd?: string): boolean {
-  return existsSync(getFilePath(REQUIREMENTS_FILE, cwd));
-}
-
-export function initRequirementsFile(cwd?: string): void {
-  const data = createEmptyRequirementsFile();
-  saveRequirements(data, cwd);
 }

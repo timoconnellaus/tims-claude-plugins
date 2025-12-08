@@ -1,90 +1,109 @@
-export type SourceType = "doc" | "ai" | "slack" | "jira" | "manual";
+/**
+ * Requirements tracker types - supports Linear and local modes
+ */
 
-export type Priority = "critical" | "high" | "medium" | "low";
+// Mode of operation
+export type RequirementsMode = "local" | "linear";
 
-export type RequirementStatus = "draft" | "approved" | "implemented" | "released";
-
-export interface RequirementSource {
-  type: SourceType;
-  reference: string;
-  capturedAt: string; // ISO 8601
+// Common issue interface (shared fields)
+export interface Issue {
+  id: string;
+  identifier: string;   // e.g., "ENG-123" or "REQ-001"
+  title: string;
+  description?: string;
+  state: {
+    name: string;
+    type: string;
+  };
+  priority: number;     // 0 = No priority, 1 = Urgent, 2 = High, 3 = Medium, 4 = Low
+  labels: string[];
+  // Optional fields (present in Linear mode)
+  assignee?: string;
+  url?: string;
 }
 
-export interface TestConfirmation {
-  hash: string;          // Hash of test function body
-  confirmedAt: string;   // ISO 8601
-  confirmedBy?: string;  // Who confirmed
-  note?: string;         // Confirmation note
+// Linear issue (extends base with required url and updatedAt)
+export interface LinearIssue extends Issue {
+  url: string;         // Required in Linear mode
+  updatedAt: string;
 }
 
+// Local issue (extends base with local-specific fields)
+export interface LocalIssue extends Issue {
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Test link stored in Linear comments or locally
 export interface TestLink {
-  runner: string;
-  file: string;
-  identifier: string;
-  linkedAt: string; // ISO 8601
-  confirmation?: TestConfirmation;
+  file: string;         // e.g., "src/auth.test.ts"
+  identifier: string;   // e.g., "validates login credentials"
+  linkedAt: string;     // ISO timestamp
+  linkedBy?: string;    // Who linked it
 }
 
-export type HistoryAction = "created" | "modified" | "archived" | "restored" | "status_changed" | "priority_changed" | "tags_changed" | "github_linked" | "github_unlinked";
-
-export interface HistoryEntry {
-  action: HistoryAction;
-  timestamp: string; // ISO 8601
-  by?: string;
-  note?: string;
-}
-
-export interface GitHubIssue {
-  number: number;              // Issue number only (repo is in config)
-  state?: "open" | "closed";   // Cached state from last sync
-  title?: string;              // Cached title from last sync
-  lastSynced?: string;         // ISO 8601 timestamp of last sync
-}
-
-export interface Requirement {
-  description: string;
-  source: RequirementSource;
+// Parsed from Linear comment
+export interface IssueTestLinks {
+  issueId: string;
+  identifier: string;   // e.g., "ENG-123"
   tests: TestLink[];
-  history: HistoryEntry[];
-  lastVerified?: string; // ISO 8601
-  tags?: string[];
-  priority?: Priority;
-  status?: RequirementStatus;
-  githubIssue?: GitHubIssue;
+  commentId?: string;   // Linear comment ID (for updates)
 }
 
-export interface TestRunner {
-  name: string;
-  command: string;
-  pattern: string;
+// Local cache structure (supports both modes)
+export interface LocalCache {
+  mode: RequirementsMode;
+  lastSync: string;     // ISO timestamp
+  issues: Issue[];      // LinearIssue[] or LocalIssue[]
+  testLinks: IssueTestLinks[];
+  // Linear mode only
+  teamId?: string;
+  teamKey?: string;
 }
 
-export interface GitHubConfig {
-  repo: string;              // owner/repo format
-  autoDetected?: boolean;    // Whether repo was auto-detected from git remote
-}
-
+// Config stored in project root
 export interface RequirementsConfig {
-  testRunners: TestRunner[];
-  github?: GitHubConfig;
+  mode: RequirementsMode;
+
+  // Local mode settings
+  prefix?: string;        // e.g., "REQ" for REQ-001
+  nextId?: number;        // Next ID to assign
+
+  // Linear mode settings
+  linearApiKey?: string;  // Can also be in env: LINEAR_API_KEY
+  teamId?: string;
+  teamKey?: string;
+  projectId?: string;     // Optional: filter to specific project
+  filters?: {
+    states?: string[];    // Only sync issues in these states
+    labels?: string[];    // Only sync issues with these labels
+  };
 }
 
-export interface RequirementsFile {
-  version: string;
-  config: RequirementsConfig;
-  requirements: Record<string, Requirement>;
-}
+// Priority mapping
+export const PRIORITY_LABELS: Record<number, string> = {
+  0: "No priority",
+  1: "Urgent",
+  2: "High",
+  3: "Medium",
+  4: "Low",
+};
 
-export interface ArchiveFile {
-  version: string;
-  requirements: Record<string, Requirement>;
-}
+// State type mapping
+export const STATE_TYPES = {
+  backlog: "backlog",
+  unstarted: "unstarted",
+  started: "started",
+  completed: "completed",
+  canceled: "canceled",
+} as const;
 
-// Helper type for check results
-export interface CheckResult {
-  requirementsWithoutTests: string[];
-  testsWithoutRequirements: { runner: string; file: string; identifier: string }[];
-  passingRequirements: string[];
-  failingRequirements: string[];
-  untestedRequirements: string[];
-}
+export type StateType = keyof typeof STATE_TYPES;
+
+// Comment markers for test links
+export const TEST_LINK_COMMENT_MARKER = "<!-- req-tests:";
+export const TEST_LINK_COMMENT_END = " -->";
+
+// File paths
+export const CONFIG_FILE = ".requirements.json";
+export const CACHE_FILE = ".requirements-cache.json";
