@@ -1,6 +1,6 @@
-# Requirements Tracker (Linear)
+# Requirements Tracker
 
-Track test coverage against Linear issues.
+Track feature requirements with test coverage.
 
 ## Usage
 
@@ -10,12 +10,10 @@ req $ARGUMENTS
 
 ## Commands
 
-- `init` - Connect to Linear, select team/project
-- `sync` - Fetch issues from Linear
-- `list` - List issues (supports filtering)
-- `link <issue> <file:identifier>` - Link test to issue
-- `unlink <issue> <file:identifier>` - Remove test link
-- `check` - Check test coverage
+- `init [--test-runner <cmd>] [--test-glob <glob>]` - Create .requirements/ folder
+- `link <feature> <req-id> <file:id>` - Link test to requirement
+- `check` - Validate coverage, staleness, orphans
+- `assess <feature> <req-id> --result '{...}'` - Update AI assessment
 
 ## Examples
 
@@ -23,18 +21,15 @@ req $ARGUMENTS
 # Setup
 req init
 
-# Sync from Linear
-req sync
-
-# Show issues without tests
-req list --coverage without
-
 # Link a test
-req link ENG-123 src/auth.test.ts:validates login
+req link user-auth 1 src/auth.test.ts:validates login
 
 # Check coverage
-req check --coverage
-req check --orphans
+req check
+req check --json
+
+# Update assessment
+req assess user-auth 1 --result '{"sufficient": true, "notes": "Good"}'
 ```
 
 Run any command with `--help` for options.

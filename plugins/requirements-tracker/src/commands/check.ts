@@ -1,168 +1,282 @@
 /**
- * Check test coverage for Linear issues
+ * Check test coverage and verification status
  */
 
-import { glob } from "glob";
-import { readFile } from "fs/promises";
-import { loadCache } from "../lib/store";
-import { PRIORITY_LABELS } from "../lib/types";
-
-interface ExtractedTest {
-  file: string;
-  identifier: string;
-}
+import { loadConfig, loadAllFeatures, saveFeature } from "../lib/store";
+import { extractAllTests } from "../lib/test-parser";
+import type {
+  CheckResult,
+  VerificationStatus,
+  TestLink,
+} from "../lib/types";
 
 /**
- * Extract test identifiers from a test file
+ * Determine verification status for a requirement
  */
-async function extractTests(filePath: string): Promise<ExtractedTest[]> {
-  const content = await readFile(filePath, "utf-8");
-  const tests: ExtractedTest[] = [];
+function getVerificationStatus(
+  tests: TestLink[],
+  currentHashes: Map<string, string>,
+  hasAssessment: boolean
+): VerificationStatus {
+  // No tests = nothing to verify
+  if (tests.length === 0) {
+    return "n/a";
+  }
 
-  // Match describe/it/test patterns
-  const patterns = [
-    /(?:describe|it|test)\s*\(\s*["'`]([^"'`]+)["'`]/g,
-    /Bun\.test\s*\(\s*["'`]([^"'`]+)["'`]/g,
-  ];
+  // Has tests but no assessment = unverified
+  if (!hasAssessment) {
+    return "unverified";
+  }
 
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      tests.push({
-        file: filePath,
-        identifier: match[1],
-      });
+  // Has assessment - check if any test hashes changed
+  for (const test of tests) {
+    const key = `${test.file}:${test.identifier}`;
+    const currentHash = currentHashes.get(key);
+    if (currentHash && currentHash !== test.hash) {
+      return "stale";
     }
   }
 
-  return tests;
+  // Assessment exists and no hashes changed
+  return "verified";
 }
 
 export async function check(args: {
   cwd: string;
-  coverage?: boolean;
-  orphans?: boolean;
   json?: boolean;
-  testGlob?: string;
 }): Promise<void> {
-  const { cwd, coverage, orphans, json, testGlob = "**/*.test.{ts,js,tsx,jsx}" } = args;
+  const { cwd, json } = args;
 
-  // Load cache
-  const cache = await loadCache(cwd);
-  if (!cache) {
-    console.error("No cache found. Run 'req sync' first.");
+  // Load config
+  const config = await loadConfig(cwd);
+  if (!config) {
+    console.error("Not initialized. Run 'req init' first.");
     process.exit(1);
   }
 
-  const { issues, testLinks } = cache;
-
-  // Build lookup of issues with tests
-  const issuesWithTests = new Set(testLinks.map((l) => l.issueId));
-
-  // Issues without tests
-  const uncovered = issues.filter((i) => !issuesWithTests.has(i.id));
-
-  // For orphan detection, find all tests in codebase
-  let allTests: ExtractedTest[] = [];
-  let orphanTests: ExtractedTest[] = [];
-
-  if (orphans || !coverage) {
-    // Find test files
-    const testFiles = await glob(testGlob, { cwd, absolute: true });
-
-    for (const file of testFiles) {
-      const extracted = await extractTests(file);
-      allTests.push(...extracted);
+  // Load all features
+  const features = await loadAllFeatures(cwd);
+  if (features.length === 0) {
+    if (json) {
+      console.log(
+        JSON.stringify({
+          features: [],
+          orphanedTests: [],
+          summary: {
+            totalFeatures: 0,
+            totalRequirements: 0,
+            untested: 0,
+            tested: 0,
+            unverified: 0,
+            verified: 0,
+            stale: 0,
+            orphanedTestCount: 0,
+            unansweredQuestions: 0,
+          },
+        })
+      );
+    } else {
+      console.log("No feature files found in .requirements/");
+      console.log("Create feature files like: FEAT_001_user-auth.yml");
     }
+    return;
+  }
 
-    // Build set of linked tests
-    const linkedTests = new Set<string>();
-    for (const link of testLinks) {
-      for (const test of link.tests) {
-        linkedTests.add(`${test.file}:${test.identifier}`);
+  // Extract all tests from codebase
+  if (!json) {
+    console.log("Extracting tests from codebase...");
+  }
+  const allExtractedTests = await extractAllTests(cwd, config.testGlob);
+  const testHashMap = new Map<string, string>();
+  for (const test of allExtractedTests) {
+    testHashMap.set(`${test.file}:${test.identifier}`, test.hash);
+  }
+
+  // Update test hashes in feature files (and clear assessments if changed)
+  for (const feature of features) {
+    let modified = false;
+    for (const req of Object.values(feature.data.requirements)) {
+      for (const test of req.tests) {
+        const key = `${test.file}:${test.identifier}`;
+        const currentHash = testHashMap.get(key);
+        if (currentHash && test.hash !== currentHash) {
+          test.hash = currentHash;
+          modified = true;
+          // Clear assessment since hash changed
+          delete req.aiAssessment;
+        }
       }
     }
-
-    // Find orphans
-    orphanTests = allTests.filter(
-      (t) => !linkedTests.has(`${t.file}:${t.identifier}`)
-    );
+    if (modified) {
+      await saveFeature(cwd, feature);
+    }
   }
+
+  // Build results
+  const result: CheckResult = {
+    features: [],
+    orphanedTests: [],
+    summary: {
+      totalFeatures: features.length,
+      totalRequirements: 0,
+      untested: 0,
+      tested: 0,
+      unverified: 0,
+      verified: 0,
+      stale: 0,
+      orphanedTestCount: 0,
+      unansweredQuestions: 0,
+    },
+  };
+
+  // Analyze each feature
+  const linkedTestKeys = new Set<string>();
+
+  for (const feature of features) {
+    const featureResult = {
+      feature: feature.filename,
+      requirements: [] as {
+        id: string;
+        testCount: number;
+        verification: VerificationStatus;
+        coverageSufficient: boolean | null;
+        unansweredQuestions: number;
+      }[],
+    };
+
+    for (const [id, req] of Object.entries(feature.data.requirements)) {
+      result.summary.totalRequirements++;
+
+      // Track linked tests
+      for (const test of req.tests) {
+        linkedTestKeys.add(`${test.file}:${test.identifier}`);
+      }
+
+      // Get verification status
+      const verification = getVerificationStatus(
+        req.tests,
+        testHashMap,
+        !!req.aiAssessment
+      );
+
+      // Update summary counts
+      if (req.tests.length === 0) {
+        result.summary.untested++;
+      } else {
+        result.summary.tested++;
+      }
+
+      switch (verification) {
+        case "unverified":
+          result.summary.unverified++;
+          break;
+        case "verified":
+          result.summary.verified++;
+          break;
+        case "stale":
+          result.summary.stale++;
+          break;
+      }
+
+      // Count unanswered questions
+      const unanswered = (req.questions || []).filter((q) => !q.answer).length;
+      result.summary.unansweredQuestions += unanswered;
+
+      featureResult.requirements.push({
+        id,
+        testCount: req.tests.length,
+        verification,
+        coverageSufficient: req.aiAssessment?.sufficient ?? null,
+        unansweredQuestions: unanswered,
+      });
+    }
+
+    result.features.push(featureResult);
+  }
+
+  // Find orphaned tests
+  for (const test of allExtractedTests) {
+    const key = `${test.file}:${test.identifier}`;
+    if (!linkedTestKeys.has(key)) {
+      result.orphanedTests.push(test);
+    }
+  }
+  result.summary.orphanedTestCount = result.orphanedTests.length;
 
   // Output
   if (json) {
-    const result: Record<string, unknown> = {
-      totalIssues: issues.length,
-      withTests: issuesWithTests.size,
-      withoutTests: uncovered.length,
-    };
-
-    if (coverage || (!coverage && !orphans)) {
-      result.uncovered = uncovered.map((i) => ({
-        identifier: i.identifier,
-        title: i.title,
-        priority: i.priority,
-        priorityLabel: PRIORITY_LABELS[i.priority],
-        state: i.state.name,
-        url: i.url,
-      }));
-    }
-
-    if (orphans || (!coverage && !orphans)) {
-      result.orphanTests = orphanTests.map((t) => ({
-        file: t.file,
-        identifier: t.identifier,
-      }));
-      result.totalTests = allTests.length;
-      result.orphanCount = orphanTests.length;
-    }
-
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
   // Human-readable output
-  console.log(`\n=== Coverage Report (${cache.teamKey}) ===\n`);
-  console.log(`Total issues: ${issues.length}`);
-  console.log(`With tests: ${issuesWithTests.size}`);
-  console.log(`Without tests: ${uncovered.length}`);
+  console.log("\n=== Requirements Coverage Report ===\n");
+  console.log(`Features: ${result.summary.totalFeatures}`);
+  console.log(`Requirements: ${result.summary.totalRequirements}`);
+  console.log(`  Untested: ${result.summary.untested}`);
+  console.log(`  Tested: ${result.summary.tested}`);
+  console.log(`    Unverified: ${result.summary.unverified}`);
+  console.log(`    Verified: ${result.summary.verified}`);
+  console.log(`    Stale: ${result.summary.stale}`);
+  console.log(`Orphaned tests: ${result.summary.orphanedTestCount}`);
+  console.log(`Unanswered questions: ${result.summary.unansweredQuestions}`);
 
-  if (coverage || (!coverage && !orphans)) {
-    if (uncovered.length > 0) {
-      console.log(`\n--- Issues Without Tests ---\n`);
+  // Show untested requirements
+  const untested = result.features.flatMap((f) =>
+    f.requirements.filter((r) => r.testCount === 0).map((r) => ({ feature: f.feature, ...r }))
+  );
 
-      // Sort by priority (1=Urgent is highest)
-      const sorted = [...uncovered].sort((a, b) => {
-        // 0 (no priority) should be last
-        const aPri = a.priority === 0 ? 5 : a.priority;
-        const bPri = b.priority === 0 ? 5 : b.priority;
-        return aPri - bPri;
-      });
-
-      for (const issue of sorted) {
-        const pri = PRIORITY_LABELS[issue.priority] || "No priority";
-        console.log(`  ${issue.identifier} [${pri}] ${issue.title}`);
-        console.log(`    State: ${issue.state.name}`);
-        console.log(`    ${issue.url}\n`);
-      }
-    } else {
-      console.log(`\nAll issues have linked tests.`);
+  if (untested.length > 0) {
+    console.log("\n--- Untested Requirements ---\n");
+    for (const req of untested) {
+      console.log(`  ${req.feature} #${req.id}`);
     }
   }
 
-  if (orphans || (!coverage && !orphans)) {
-    console.log(`\n--- Orphan Tests ---\n`);
-    console.log(`Total tests found: ${allTests.length}`);
-    console.log(`Orphan tests: ${orphanTests.length}`);
+  // Show unverified requirements
+  const unverified = result.features.flatMap((f) =>
+    f.requirements.filter((r) => r.verification === "unverified").map((r) => ({ feature: f.feature, ...r }))
+  );
 
-    if (orphanTests.length > 0) {
-      console.log();
-      for (const test of orphanTests.slice(0, 20)) {
-        console.log(`  ${test.file}:${test.identifier}`);
-      }
-      if (orphanTests.length > 20) {
-        console.log(`  ... and ${orphanTests.length - 20} more`);
-      }
+  if (unverified.length > 0) {
+    console.log("\n--- Unverified Requirements (need AI assessment) ---\n");
+    for (const req of unverified) {
+      console.log(`  ${req.feature} #${req.id} (${req.testCount} test(s))`);
+    }
+  }
+
+  // Show stale requirements
+  const stale = result.features.flatMap((f) =>
+    f.requirements.filter((r) => r.verification === "stale").map((r) => ({ feature: f.feature, ...r }))
+  );
+
+  if (stale.length > 0) {
+    console.log("\n--- Stale Requirements (tests changed, need re-assessment) ---\n");
+    for (const req of stale) {
+      console.log(`  ${req.feature} #${req.id}`);
+    }
+  }
+
+  // Show orphaned tests (first 10)
+  if (result.orphanedTests.length > 0) {
+    console.log("\n--- Orphaned Tests (not linked to any requirement) ---\n");
+    for (const test of result.orphanedTests.slice(0, 10)) {
+      console.log(`  ${test.file}:${test.identifier}`);
+    }
+    if (result.orphanedTests.length > 10) {
+      console.log(`  ... and ${result.orphanedTests.length - 10} more`);
+    }
+  }
+
+  // Show requirements with unanswered questions
+  const withQuestions = result.features.flatMap((f) =>
+    f.requirements.filter((r) => r.unansweredQuestions > 0).map((r) => ({ feature: f.feature, ...r }))
+  );
+
+  if (withQuestions.length > 0) {
+    console.log("\n--- Requirements With Unanswered Questions ---\n");
+    for (const req of withQuestions) {
+      console.log(`  ${req.feature} #${req.id}: ${req.unansweredQuestions} question(s)`);
     }
   }
 

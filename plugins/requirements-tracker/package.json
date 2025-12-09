@@ -1,6 +1,6 @@
 {
   "name": "requirements-tracker",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
   "bin": {
     "req": "./src/cli.ts"
@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "yaml": "^2.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
