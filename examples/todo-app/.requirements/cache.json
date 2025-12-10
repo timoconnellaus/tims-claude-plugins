@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "generatedAt": "2025-12-10T22:42:19.969Z",
+  "fileMtimes": {
+    "tests/todo.test.ts": 1765406539778
+  },
+  "tests": {
+    "tests/todo.test.ts:addTodo creates a new todo": "eac8f40f3231ea44eb1b2d6c3975382b689e2068adf3d0447141712733870217",
+    "tests/todo.test.ts:addTodo trims whitespace from title": "61a927f9f4b6cc9878783df8dc9c592fb11eefd724a8103f42e93a7f6fb06ef9",
+    "tests/todo.test.ts:addTodo throws on empty title": "24deb6ad220f530d5df596eda8ff0b172cb44c50ad84a0d35b22156c04f3f8b8",
+    "tests/todo.test.ts:getTodo retrieves a todo by id": "7c414559bb32a06e73d74fbfe0a71aaf1d20193fca27d2ba1f0d76c17e3efde5",
+    "tests/todo.test.ts:getTodo returns undefined for non-existent id": "0c45b993a62e7c46e499353b200034e5625a8513a37bc2c89154061440edc5e6",
+    "tests/todo.test.ts:listTodos returns all todos": "279555481d5f5e2ad3b98e521c2e2b434bd110f26bef7b047388ce9d0744dd37",
+    "tests/todo.test.ts:deleteTodo removes a todo": "3cbf5ceadc1d55f00d3bb37dbf3d5cf09e044efed09b2372330df4e9b26176a9",
+    "tests/todo.test.ts:deleteTodo returns false for non-existent id": "2144dac51a6a6f00cc1ac4752d7e4c8aaab760102ea684271e0856553ee1e36a",
+    "tests/todo.test.ts:completeTodo marks todo as completed": "4c3ad224f71fb0c4ae4688a83e8d66e25b3e7f351fa230680ce66e1fb98ae9d3",
+    "tests/todo.test.ts:completeTodo is idempotent": "78459d9154e940ceb0cc7b42e15a392c0c1936cc62c9a9cca85c5e40a5565507",
+    "tests/todo.test.ts:completeTodo throws for non-existent todo": "d679ef79a4492a3edacc22263418bd1c6f88f24611996ba2e2ea693a3b73c3ad",
+    "tests/todo.test.ts:uncompleteTodo marks todo as not completed": "37ceaf08f2cad184ef9623e691e4d66185f5a89643b1b4043f34fa4f06599d0a",
+    "tests/todo.test.ts:uncompleteTodo throws for non-existent todo": "ca03a9efa81e8e4f710c7afaa29db14664430ec74bb4c9bb922ec4fd251ce95a",
+    "tests/todo.test.ts:listActiveTodos returns only active todos": "68618a4b692a782dbd086db7fe8867500596c059b1a6b428ad26bb15b328763a",
+    "tests/todo.test.ts:listCompletedTodos returns only completed todos": "830c0819ada0668ce616140117ae8638a80352ce9ea06a9ddc83243cf0eb1c02",
+    "tests/todo.test.ts:updateTodoTitle changes the title": "25282fd12cfa7481eb5761bc1ae2969060d7fc84d9f7bfe09b7599f2fb782b65",
+    "tests/todo.test.ts:updateTodoTitle trims whitespace": "752b1e90972af6b8da15703c88e5b1c3e89c3ffe129591aa9786b523b24f248b",
+    "tests/todo.test.ts:updateTodoTitle throws on empty title": "5c3b1c517dd0a068e2caaae096e8c993b90431266d661d41b555e89ad7dbdb6d",
+    "tests/todo.test.ts:updateTodoTitle throws for non-existent todo": "a55c0501561700454b68ecdb14997e417b152a7ea681734a335ca2e54e708bf7",
+    "tests/todo.test.ts:clearCompleted removes all completed todos": "183440b51fcf39567405ca102cc7dd2fae2a98e57276352e3e55627530746029",
+    "tests/todo.test.ts:clearCompleted returns 0 when no completed todos": "812e64f04b4973bfa19c083389b502d885ee1baeceae0221e8949944cf618939",
+    "tests/todo.test.ts:getStats returns correct counts": "1b6ce44a408f6f3faa3365d901bbf554849127eb1e9dae7410610ed298cd4203",
+    "tests/todo.test.ts:getStats returns zeros for empty store": "40176f18980779a7e61edcfecef05dd555cfbb4233005d3ab46253018959c1a3"
+  }
+}

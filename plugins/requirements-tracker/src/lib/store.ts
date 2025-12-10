@@ -1,21 +1,25 @@
 /**
- * Storage layer for YAML-based requirements
+ * Storage layer for folder-based requirements system
  */
 
-import { readFile, writeFile, readdir, mkdir, access } from "fs/promises";
-import { join } from "path";
+import { readFile, writeFile, mkdir, access } from "fs/promises";
+import { join, dirname, relative } from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { glob } from "glob";
 import {
   Config,
-  FeatureFile,
-  ParsedFeature,
+  ParsedRequirement,
   Requirement,
+  TestCache,
+  IgnoredTestsFile,
   REQUIREMENTS_DIR,
   CONFIG_FILE,
-  FEATURE_FILE_PATTERN,
+  CACHE_FILE,
+  IGNORED_TESTS_FILE,
+  REQUIREMENT_FILE_PATTERN,
 } from "./types";
 
-// === Directory/Path Helpers ===
+// === Path Helpers ===
 
 export function getRequirementsDir(cwd: string): string {
   return join(cwd, REQUIREMENTS_DIR);
@@ -25,6 +29,16 @@ export function getConfigPath(cwd: string): string {
   return join(getRequirementsDir(cwd), CONFIG_FILE);
 }
 
+export function getCachePath(cwd: string): string {
+  return join(getRequirementsDir(cwd), CACHE_FILE);
+}
+
+export function getIgnoredTestsPath(cwd: string): string {
+  return join(getRequirementsDir(cwd), IGNORED_TESTS_FILE);
+}
+
+// === Directory Operations ===
+
 export async function requirementsDirExists(cwd: string): Promise<boolean> {
   try {
     await access(getRequirementsDir(cwd));
@@ -32,6 +46,10 @@ export async function requirementsDirExists(cwd: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function createRequirementsDir(cwd: string): Promise<void> {
+  await mkdir(getRequirementsDir(cwd), { recursive: true });
 }
 
 // === Config Operations ===
@@ -49,129 +67,184 @@ export async function saveConfig(cwd: string, config: Config): Promise<void> {
   await writeFile(getConfigPath(cwd), stringifyYaml(config));
 }
 
-export async function createRequirementsDir(cwd: string): Promise<void> {
-  await mkdir(getRequirementsDir(cwd), { recursive: true });
-}
+// === Cache Operations ===
 
-// === Feature File Operations ===
-
-export async function listFeatureFiles(cwd: string): Promise<string[]> {
-  const dir = getRequirementsDir(cwd);
+export async function loadCache(cwd: string): Promise<TestCache | null> {
   try {
-    const files = await readdir(dir);
-    return files.filter((f) => FEATURE_FILE_PATTERN.test(f)).sort();
-  } catch {
-    return [];
-  }
-}
-
-export async function loadFeature(
-  cwd: string,
-  filename: string
-): Promise<ParsedFeature | null> {
-  const match = filename.match(FEATURE_FILE_PATTERN);
-  if (!match) return null;
-
-  const filePath = join(getRequirementsDir(cwd), filename);
-  try {
-    const content = await readFile(filePath, "utf-8");
-    const data = parseYaml(content) as FeatureFile;
-
-    // Ensure requirements is initialized
-    if (!data.requirements) {
-      data.requirements = {};
-    }
-
-    // Ensure each requirement has tests array
-    for (const req of Object.values(data.requirements)) {
-      if (!req.tests) {
-        req.tests = [];
-      }
-    }
-
-    return {
-      filename,
-      number: parseInt(match[1], 10),
-      userPart: match[2],
-      filePath,
-      data,
-    };
+    const content = await readFile(getCachePath(cwd), "utf-8");
+    return JSON.parse(content) as TestCache;
   } catch {
     return null;
   }
 }
 
-export async function loadAllFeatures(cwd: string): Promise<ParsedFeature[]> {
-  const files = await listFeatureFiles(cwd);
-  const features: ParsedFeature[] = [];
-  for (const file of files) {
-    const feature = await loadFeature(cwd, file);
-    if (feature) features.push(feature);
-  }
-  return features;
+export async function saveCache(cwd: string, cache: TestCache): Promise<void> {
+  await writeFile(getCachePath(cwd), JSON.stringify(cache, null, 2));
 }
 
-export async function saveFeature(
+// === Ignored Tests Operations ===
+
+export async function loadIgnoredTests(cwd: string): Promise<IgnoredTestsFile> {
+  try {
+    const content = await readFile(getIgnoredTestsPath(cwd), "utf-8");
+    const data = parseYaml(content) as IgnoredTestsFile;
+    return data || { tests: [] };
+  } catch {
+    return { tests: [] };
+  }
+}
+
+export async function saveIgnoredTests(
   cwd: string,
-  feature: ParsedFeature
+  data: IgnoredTestsFile
 ): Promise<void> {
-  const filePath = join(getRequirementsDir(cwd), feature.filename);
-  await writeFile(filePath, stringifyYaml(feature.data));
+  await writeFile(getIgnoredTestsPath(cwd), stringifyYaml(data));
 }
 
-export function getNextFeatureNumber(features: ParsedFeature[]): number {
-  if (features.length === 0) return 1;
-  const max = Math.max(...features.map((f) => f.number));
-  return max + 1;
+// === Requirement Operations ===
+
+export function isValidRequirementPath(path: string): boolean {
+  // Extract just the filename from the path
+  const parts = path.split("/");
+  const filename = parts[parts.length - 1];
+  return REQUIREMENT_FILE_PATTERN.test(filename);
 }
 
-export function findFeatureByName(
-  features: ParsedFeature[],
-  name: string
-): ParsedFeature | undefined {
-  // Match by filename (e.g., "FEAT_001_user-auth") or user part (e.g., "user-auth")
-  // Also match by just the number (e.g., "FEAT_001" or "001" or "1")
-  const normalized = name.toLowerCase();
+export async function requirementExists(
+  cwd: string,
+  reqPath: string
+): Promise<boolean> {
+  try {
+    const fullPath = join(getRequirementsDir(cwd), reqPath);
+    await access(fullPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  // Try exact filename match first
-  const exactMatch = features.find(
-    (f) => f.filename.toLowerCase() === normalized + ".yml" ||
-           f.filename.toLowerCase() === normalized
-  );
-  if (exactMatch) return exactMatch;
+export class RequirementValidationError extends Error {
+  constructor(
+    public reqPath: string,
+    message: string
+  ) {
+    super(`${reqPath}: ${message}`);
+    this.name = "RequirementValidationError";
+  }
+}
 
-  // Try user part match
-  const userPartMatch = features.find(
-    (f) => f.userPart.toLowerCase() === normalized
-  );
-  if (userPartMatch) return userPartMatch;
-
-  // Try partial match (filename contains the search term)
-  const partialMatch = features.find((f) =>
-    f.filename.toLowerCase().includes(normalized)
-  );
-  if (partialMatch) return partialMatch;
-
-  // Try number-only match
-  const numMatch = normalized.match(/^(?:feat_?)?(\d+)$/i);
-  if (numMatch) {
-    const num = parseInt(numMatch[1], 10);
-    return features.find((f) => f.number === num);
+export async function loadRequirement(
+  cwd: string,
+  reqPath: string
+): Promise<ParsedRequirement | null> {
+  if (!isValidRequirementPath(reqPath)) {
+    return null;
   }
 
-  return undefined;
+  const fullPath = join(getRequirementsDir(cwd), reqPath);
+  try {
+    const content = await readFile(fullPath, "utf-8");
+    const data = parseYaml(content) as Requirement;
+
+    // Ensure tests array exists
+    if (!data.tests) {
+      data.tests = [];
+    }
+
+    // Validate required status field
+    if (!data.status || (data.status !== "planned" && data.status !== "done")) {
+      throw new RequirementValidationError(
+        reqPath,
+        'Missing or invalid "status" field. Must be "planned" or "done".'
+      );
+    }
+
+    return {
+      path: reqPath,
+      data,
+    };
+  } catch (error) {
+    if (error instanceof RequirementValidationError) {
+      throw error;
+    }
+    return null;
+  }
 }
 
-export function findRequirement(
-  features: ParsedFeature[],
-  featureName: string,
-  reqId: string
-): { feature: ParsedFeature; requirement: Requirement; id: string } | null {
-  const feature = findFeatureByName(features, featureName);
-  if (!feature) return null;
+export async function saveRequirement(
+  cwd: string,
+  reqPath: string,
+  data: Requirement
+): Promise<void> {
+  if (!isValidRequirementPath(reqPath)) {
+    throw new Error(`Invalid requirement path: ${reqPath}`);
+  }
 
-  const requirement = feature.data.requirements[reqId];
-  if (!requirement) return null;
+  const fullPath = join(getRequirementsDir(cwd), reqPath);
 
-  return { feature, requirement, id: reqId };
+  // Ensure parent directory exists
+  const parentDir = dirname(fullPath);
+  await mkdir(parentDir, { recursive: true });
+
+  await writeFile(fullPath, stringifyYaml(data));
+}
+
+export interface LoadRequirementsResult {
+  requirements: ParsedRequirement[];
+  errors: RequirementValidationError[];
+}
+
+export async function loadAllRequirements(
+  cwd: string
+): Promise<LoadRequirementsResult> {
+  const reqDir = getRequirementsDir(cwd);
+
+  // Use glob to find all REQ_*.yml files recursively
+  const pattern = join(reqDir, "**", "REQ_*.yml");
+  const files = await glob(pattern, { nodir: true });
+
+  const requirements: ParsedRequirement[] = [];
+  const errors: RequirementValidationError[] = [];
+
+  for (const file of files) {
+    // Get relative path from requirements dir
+    const reqPath = relative(reqDir, file);
+    try {
+      const req = await loadRequirement(cwd, reqPath);
+      if (req) {
+        requirements.push(req);
+      }
+    } catch (error) {
+      if (error instanceof RequirementValidationError) {
+        errors.push(error);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Sort by path for consistent ordering
+  return {
+    requirements: requirements.sort((a, b) => a.path.localeCompare(b.path)),
+    errors,
+  };
+}
+
+export async function loadRequirementsInPath(
+  cwd: string,
+  pathFilter: string
+): Promise<LoadRequirementsResult> {
+  const result = await loadAllRequirements(cwd);
+
+  // Filter requirements by path prefix
+  // pathFilter can be:
+  // - "auth/" to match all in auth folder
+  // - "auth/REQ_login.yml" to match exact file
+  // - "auth/session/" to match nested folder
+  return {
+    requirements: result.requirements.filter((req) =>
+      req.path.startsWith(pathFilter)
+    ),
+    errors: result.errors.filter((err) => err.reqPath.startsWith(pathFilter)),
+  };
 }

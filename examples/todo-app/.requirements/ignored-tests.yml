@@ -1,0 +1,5 @@
+tests:
+  - file: tests/todo.test.ts
+    identifier: getTodo returns undefined for non-existent id
+    reason: Edge case behavior - not a formal requirement
+    ignoredAt: 2025-12-09T23:23:20.914Z

@@ -1,0 +1,35 @@
+status: done
+gherkin: |-
+  Given a todo store with an existing todo
+  When a user updates the todo title
+  Then the todo title is changed to the new value (trimmed)
+
+  Given a todo store with an existing todo
+  When a user tries to update the title to empty
+  Then an error is thrown
+  And the original title is preserved
+
+  Given a todo store
+  When a user tries to update a non-existent todo
+  Then an error is thrown
+source:
+  type: manual
+  description: Core todo-app functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: updateTodoTitle changes the title
+    hash: 25282fd12cfa7481eb5761bc1ae2969060d7fc84d9f7bfe09b7599f2fb782b65
+  - file: tests/todo.test.ts
+    identifier: updateTodoTitle trims whitespace
+    hash: 752b1e90972af6b8da15703c88e5b1c3e89c3ffe129591aa9786b523b24f248b
+  - file: tests/todo.test.ts
+    identifier: updateTodoTitle throws on empty title
+    hash: 5c3b1c517dd0a068e2caaae096e8c993b90431266d661d41b555e89ad7dbdb6d
+  - file: tests/todo.test.ts
+    identifier: updateTodoTitle throws for non-existent todo
+    hash: a55c0501561700454b68ecdb14997e417b152a7ea681734a335ca2e54e708bf7
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: title change, whitespace trimming, empty title rejection,
+    and non-existent todo error."
+  assessedAt: 2025-12-10T00:27:47.987Z

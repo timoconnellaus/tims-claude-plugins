@@ -1,0 +1,23 @@
+status: done
+gherkin: |-
+  Given a todo store
+  When a user tries to add a todo with an empty title
+  Then an error is thrown
+  And no todo is created
+
+  Given a todo store
+  When a user tries to add a todo with a whitespace-only title
+  Then an error is thrown
+  And no todo is created
+source:
+  type: manual
+  description: Input validation - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: addTodo throws on empty title
+    hash: 24deb6ad220f530d5df596eda8ff0b172cb44c50ad84a0d35b22156c04f3f8b8
+aiAssessment:
+  sufficient: true
+  notes: Test covers both empty string and whitespace-only title rejection in a
+    single test case.
+  assessedAt: 2025-12-10T00:27:48.630Z

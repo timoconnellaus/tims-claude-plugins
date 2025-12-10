@@ -1,0 +1,29 @@
+status: done
+gherkin: |-
+  Given a todo store
+  When a user adds a todo with a title
+  Then the todo is created with a unique ID
+  And the todo has the trimmed title
+  And the todo is marked as not completed
+  And the todo has a creation timestamp
+source:
+  type: manual
+  description: Core todo-app functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: addTodo creates a new todo
+    hash: 5110199830b4066c9bd8871b295144f5c2740500dc8394a01ba791299525265b
+  - file: tests/todo.test.ts
+    identifier: addTodo trims whitespace from title
+    hash: 61a927f9f4b6cc9878783df8dc9c592fb11eefd724a8103f42e93a7f6fb06ef9
+  - file: tests/todo.test.ts
+    identifier: getTodo retrieves a todo by id
+    hash: 7c414559bb32a06e73d74fbfe0a71aaf1d20193fca27d2ba1f0d76c17e3efde5
+  - file: tests/todo.test.ts
+    identifier: listTodos returns all todos
+    hash: 279555481d5f5e2ad3b98e521c2e2b434bd110f26bef7b047388ce9d0744dd37
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: creating todo with ID/title/timestamp, whitespace trimming,
+    listing all todos, and retrieving by ID."
+  assessedAt: 2025-12-10T00:27:47.893Z

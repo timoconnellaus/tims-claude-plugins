@@ -1,0 +1,186 @@
+import { useState } from "react";
+import type {
+  VerificationStatus,
+  ImplementationStatus,
+  TestLink,
+  AIAssessment,
+  Question,
+  Source,
+} from "../../lib/types";
+import { StatusBadge, CoverageBadge } from "./StatusBadge";
+
+interface RequirementData {
+  id: string;
+  testCount: number;
+  verification: VerificationStatus;
+  coverageSufficient: boolean | null;
+  unansweredQuestions: number;
+  status: ImplementationStatus;
+  gherkin: string;
+  source: Source;
+  tests: TestLink[];
+  aiAssessment?: AIAssessment;
+  questions?: Question[];
+}
+
+interface RequirementCardProps {
+  requirement: RequirementData;
+}
+
+export function RequirementCard({ requirement }: RequirementCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-sm text-gray-600 truncate">
+              {requirement.id}
+            </span>
+            <StatusBadge
+              status={requirement.status}
+              verification={requirement.verification}
+            />
+            <CoverageBadge sufficient={requirement.coverageSufficient} />
+            {requirement.unansweredQuestions > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                {requirement.unansweredQuestions} question
+                {requirement.unansweredQuestions !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-400 transform transition-transform ${expanded ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-gray-100">
+          <div className="mt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              Requirement
+            </h4>
+            <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono">
+              {requirement.gherkin}
+            </pre>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Source</h4>
+            <div className="text-sm text-gray-600">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 mr-2">
+                {requirement.source.type}
+              </span>
+              {requirement.source.description}
+              {requirement.source.url && (
+                <a
+                  href={requirement.source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-2 text-blue-600 hover:underline"
+                >
+                  Link
+                </a>
+              )}
+              {requirement.source.date && (
+                <span className="ml-2 text-gray-400">
+                  ({requirement.source.date})
+                </span>
+              )}
+            </div>
+          </div>
+
+          {requirement.tests.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                Linked Tests ({requirement.tests.length})
+              </h4>
+              <ul className="space-y-1">
+                {requirement.tests.map((test, idx) => (
+                  <li
+                    key={idx}
+                    className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded"
+                  >
+                    {test.file}:{test.identifier}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {requirement.aiAssessment && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                AI Assessment
+              </h4>
+              <div
+                className={`p-3 rounded text-sm ${
+                  requirement.aiAssessment.sufficient
+                    ? "bg-green-50 text-green-800"
+                    : "bg-red-50 text-red-800"
+                }`}
+              >
+                <div className="font-medium mb-1">
+                  {requirement.aiAssessment.sufficient
+                    ? "Coverage Sufficient"
+                    : "Coverage Insufficient"}
+                </div>
+                <div className="text-sm opacity-90">
+                  {requirement.aiAssessment.notes}
+                </div>
+                <div className="text-xs mt-2 opacity-70">
+                  Assessed: {new Date(requirement.aiAssessment.assessedAt).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {requirement.questions && requirement.questions.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                Questions
+              </h4>
+              <ul className="space-y-2">
+                {requirement.questions.map((q, idx) => (
+                  <li key={idx} className="bg-gray-50 p-3 rounded text-sm">
+                    <div className="font-medium text-gray-800">{q.question}</div>
+                    {q.answer ? (
+                      <div className="mt-1 text-gray-600">
+                        <span className="text-green-600 font-medium">A:</span>{" "}
+                        {q.answer}
+                        {q.answeredAt && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            ({new Date(q.answeredAt).toLocaleDateString()})
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-yellow-600 text-xs">
+                        Unanswered
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

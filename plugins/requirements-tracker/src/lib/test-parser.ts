@@ -7,6 +7,7 @@ import { glob } from "glob";
 import { createHash } from "crypto";
 import { join, relative } from "path";
 import { ExtractedTest } from "./types";
+import { extractTestsFromContent } from "./test-parsers";
 
 /**
  * Compute SHA-256 hash of content
@@ -68,32 +69,8 @@ export async function extractTestsFromFile(
   cwd?: string
 ): Promise<ExtractedTest[]> {
   const content = await readFile(filePath, "utf-8");
-  const tests: ExtractedTest[] = [];
   const relativePath = cwd ? relative(cwd, filePath) : filePath;
-
-  // Pattern for it/test/Bun.test calls
-  // Matches: it('name', ...), test('name', ...), Bun.test('name', ...)
-  const testPattern =
-    /(?:it|test|Bun\.test)\s*\(\s*(['"`])([^'"`]+)\1\s*,/g;
-
-  let match;
-  while ((match = testPattern.exec(content)) !== null) {
-    const identifier = match[2];
-    const matchEnd = match.index + match[0].length;
-
-    // Find the function body starting after the comma
-    const body = extractFunctionBody(content, matchEnd);
-    const hash = computeHash(body);
-
-    tests.push({
-      file: relativePath,
-      identifier,
-      body,
-      hash,
-    });
-  }
-
-  return tests;
+  return extractTestsFromContent(content, filePath, relativePath);
 }
 
 /**

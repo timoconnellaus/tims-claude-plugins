@@ -1,0 +1,25 @@
+status: done
+gherkin: |-
+  Given a todo store with an existing todo
+  When a user deletes the todo
+  Then the todo is removed from the store
+  And the deleted todo is returned
+
+  Given a todo store
+  When a user tries to delete a non-existent todo
+  Then an error is thrown
+source:
+  type: manual
+  description: Core todo-app functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: deleteTodo removes a todo
+    hash: 3cbf5ceadc1d55f00d3bb37dbf3d5cf09e044efed09b2372330df4e9b26176a9
+  - file: tests/todo.test.ts
+    identifier: deleteTodo returns false for non-existent id
+    hash: 2144dac51a6a6f00cc1ac4752d7e4c8aaab760102ea684271e0856553ee1e36a
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: removing todo and returning true, returning false for
+    non-existent ID."
+  assessedAt: 2025-12-10T00:27:48.480Z

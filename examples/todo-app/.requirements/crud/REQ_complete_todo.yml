@@ -1,0 +1,28 @@
+status: done
+gherkin: |-
+  Given a todo store with an existing todo
+  When a user marks the todo as complete
+  Then the todo is marked as completed
+  And a completion timestamp is recorded
+
+  Given a todo that is already completed
+  When a user marks it as complete again
+  Then the operation is idempotent (no error)
+source:
+  type: manual
+  description: Core todo-app functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: completeTodo marks todo as completed
+    hash: 4c3ad224f71fb0c4ae4688a83e8d66e25b3e7f351fa230680ce66e1fb98ae9d3
+  - file: tests/todo.test.ts
+    identifier: completeTodo is idempotent
+    hash: 78459d9154e940ceb0cc7b42e15a392c0c1936cc62c9a9cca85c5e40a5565507
+  - file: tests/todo.test.ts
+    identifier: completeTodo throws for non-existent todo
+    hash: d679ef79a4492a3edacc22263418bd1c6f88f24611996ba2e2ea693a3b73c3ad
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: marking complete with timestamp, idempotent completion, and
+    non-existent todo error."
+  assessedAt: 2025-12-10T00:27:48.153Z

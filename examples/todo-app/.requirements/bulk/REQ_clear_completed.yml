@@ -1,0 +1,22 @@
+status: done
+gherkin: |-
+  Given a todo store with completed and active todos
+  When a user clears all completed todos
+  Then all completed todos are removed
+  And all active todos remain unchanged
+  And the count of deleted todos is returned
+source:
+  type: manual
+  description: Bulk operations - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: clearCompleted removes all completed todos
+    hash: 183440b51fcf39567405ca102cc7dd2fae2a98e57276352e3e55627530746029
+  - file: tests/todo.test.ts
+    identifier: clearCompleted returns 0 when no completed todos
+    hash: 812e64f04b4973bfa19c083389b502d885ee1baeceae0221e8949944cf618939
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: removing all completed todos with count returned, active
+    todos unchanged, and zero return when no completed todos."
+  assessedAt: 2025-12-10T00:27:48.980Z

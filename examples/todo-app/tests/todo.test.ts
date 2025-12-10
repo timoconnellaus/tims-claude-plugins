@@ -25,7 +25,7 @@ describe("Todo CRUD operations", () => {
   test("addTodo creates a new todo", () => {
     const todo = addTodo(store, "Buy groceries");
 
-    expect(todo.title).toBe("Buy groceries");
+    expect(todo.title).toBe("Buy groceriess");
     expect(todo.completed).toBe(false);
     expect(todo.id).toBeDefined();
     expect(todo.createdAt).toBeInstanceOf(Date);

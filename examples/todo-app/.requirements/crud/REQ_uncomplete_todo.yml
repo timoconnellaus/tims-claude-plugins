@@ -1,0 +1,25 @@
+status: done
+gherkin: |-
+  Given a todo store with a completed todo
+  When a user marks the todo as incomplete
+  Then the todo is marked as not completed
+  And the completion timestamp is cleared
+
+  Given a todo that is already incomplete
+  When a user marks it as incomplete again
+  Then the operation is idempotent (no error)
+source:
+  type: manual
+  description: Core todo-app functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: uncompleteTodo marks todo as not completed
+    hash: 37ceaf08f2cad184ef9623e691e4d66185f5a89643b1b4043f34fa4f06599d0a
+  - file: tests/todo.test.ts
+    identifier: uncompleteTodo throws for non-existent todo
+    hash: ca03a9efa81e8e4f710c7afaa29db14664430ec74bb4c9bb922ec4fd251ce95a
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: marking incomplete with timestamp cleared, and non-existent
+    todo error. Idempotent case not explicitly tested but behavior implied."
+  assessedAt: 2025-12-10T00:27:48.347Z

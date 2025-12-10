@@ -1,0 +1,22 @@
+status: done
+gherkin: |-
+  Given a todo store with todos
+  When a user requests statistics
+  Then the total count of todos is returned
+  And the count of active todos is returned
+  And the count of completed todos is returned
+source:
+  type: manual
+  description: Statistics functionality - derived from existing implementation
+tests:
+  - file: tests/todo.test.ts
+    identifier: getStats returns correct counts
+    hash: 1b6ce44a408f6f3faa3365d901bbf554849127eb1e9dae7410610ed298cd4203
+  - file: tests/todo.test.ts
+    identifier: getStats returns zeros for empty store
+    hash: 40176f18980779a7e61edcfecef05dd555cfbb4233005d3ab46253018959c1a3
+aiAssessment:
+  sufficient: true
+  notes: "Tests cover: correct counts for total/active/completed, and zero counts
+    for empty store."
+  assessedAt: 2025-12-10T00:27:49.121Z

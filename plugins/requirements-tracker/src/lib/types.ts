@@ -15,11 +15,26 @@ export interface TestLink {
   hash: string; // SHA-256 hash of test function body
 }
 
+// Per-test comment from AI assessment
+export interface TestComment {
+  file: string; // Test file path
+  identifier: string; // Test name
+  comment: string; // AI's comment on this test's suitability
+}
+
+// Suggested test from AI assessment
+export interface SuggestedTest {
+  description: string; // What the test should verify (Gherkin-style)
+  rationale: string; // Why this test is needed
+}
+
 // AI assessment of test coverage sufficiency
 export interface AIAssessment {
   sufficient: boolean; // Is test coverage sufficient?
   notes: string; // AI reasoning/notes
   assessedAt: string; // ISO timestamp
+  testComments?: TestComment[]; // Per-test comments
+  suggestedTests?: SuggestedTest[]; // Tests that should be written
 }
 
 // Clarification question about a requirement
@@ -39,29 +54,44 @@ export interface Source {
   date?: string; // When the source was created/discussed
 }
 
+// Implementation status for a requirement
+export type ImplementationStatus = "planned" | "done";
+
 // Single requirement within a feature
 export interface Requirement {
   gherkin: string; // Gherkin-format requirement (Given/When/Then)
   source: Source; // Where this requirement came from (REQUIRED)
   tests: TestLink[]; // Linked tests (0 or more)
+  status: ImplementationStatus; // Implementation status: "planned" or "done"
   questions?: Question[]; // Clarification questions
   aiAssessment?: AIAssessment; // Optional AI assessment
 }
 
-// Feature file structure (FEAT_001_name.yml)
-export interface FeatureFile {
-  name: string; // Feature name
-  description: string; // Feature description
-  requirements: Record<string, Requirement>; // Key is ID like "1", "2.1"
+// Parsed requirement from filesystem
+export interface ParsedRequirement {
+  path: string; // Relative path from .requirements/, e.g. "auth/REQ_login.yml"
+  data: Requirement; // The requirement content
 }
 
-// Parsed feature from filesystem
-export interface ParsedFeature {
-  filename: string; // e.g., "FEAT_001_user-auth.yml"
-  number: number; // e.g., 1
-  userPart: string; // e.g., "user-auth"
-  filePath: string; // Full path
-  data: FeatureFile; // Parsed YAML content
+// Cache file structure
+export interface TestCache {
+  version: number;
+  generatedAt: string; // ISO timestamp
+  fileMtimes: Record<string, number>; // "path/to/file.test.ts" -> mtime in ms
+  tests: Record<string, string>; // "file:identifier" -> hash
+}
+
+// Ignored test entry
+export interface IgnoredTest {
+  file: string;
+  identifier: string;
+  reason: string;
+  ignoredAt: string; // ISO timestamp
+}
+
+// Ignored tests file structure
+export interface IgnoredTestsFile {
+  tests: IgnoredTest[];
 }
 
 // Verification status - computed at check time
@@ -86,16 +116,19 @@ export interface RequirementCheckResult {
   verification: VerificationStatus;
   coverageSufficient: boolean | null; // null if no assessment
   unansweredQuestions: number;
+  status: ImplementationStatus;
 }
 
-export interface FeatureCheckResult {
-  feature: string;
+export interface RequirementGroupCheckResult {
+  path: string; // Path prefix, e.g. "auth/" or "payments/"
   requirements: RequirementCheckResult[];
 }
 
 export interface CheckSummary {
-  totalFeatures: number;
   totalRequirements: number;
+  // Implementation status
+  planned: number; // Not yet implemented
+  done: number; // Implemented
   // Coverage: does requirement have tests?
   untested: number; // No tests linked
   tested: number; // Has tests linked
@@ -110,7 +143,7 @@ export interface CheckSummary {
 }
 
 export interface CheckResult {
-  features: FeatureCheckResult[];
+  requirements: RequirementGroupCheckResult[];
   orphanedTests: ExtractedTest[];
   summary: CheckSummary;
 }
@@ -118,4 +151,6 @@ export interface CheckResult {
 // File paths and patterns
 export const REQUIREMENTS_DIR = ".requirements";
 export const CONFIG_FILE = "config.yml";
-export const FEATURE_FILE_PATTERN = /^FEAT_(\d+)_(.+)\.yml$/;
+export const CACHE_FILE = "cache.json";
+export const IGNORED_TESTS_FILE = "ignored-tests.yml";
+export const REQUIREMENT_FILE_PATTERN = /^REQ_[^/]+\.yml$/; // Matches REQ_*.yml

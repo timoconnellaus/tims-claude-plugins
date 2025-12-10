@@ -4,20 +4,19 @@
 
 import {
   loadConfig,
-  loadAllFeatures,
-  findFeatureByName,
-  saveFeature,
+  loadRequirement,
+  saveRequirement,
+  isValidRequirementPath,
 } from "../lib/store";
 import { findTest } from "../lib/test-parser";
 import type { TestLink } from "../lib/types";
 
 export async function link(args: {
   cwd: string;
-  featureName: string; // e.g., "user-auth" or "FEAT_001_user-auth"
-  reqId: string; // e.g., "1" or "2.1"
+  path: string; // e.g., "auth/REQ_login.yml"
   testSpec: string; // e.g., "src/auth.test.ts:validates login"
 }): Promise<void> {
-  const { cwd, featureName, reqId, testSpec } = args;
+  const { cwd, path, testSpec } = args;
 
   // Parse test spec
   const colonIndex = testSpec.indexOf(":");
@@ -35,6 +34,13 @@ export async function link(args: {
     process.exit(1);
   }
 
+  // Validate path format
+  if (!isValidRequirementPath(path)) {
+    console.error("Invalid requirement path. Must end with REQ_*.yml");
+    console.error("Example: auth/REQ_login.yml");
+    process.exit(1);
+  }
+
   // Load config
   const config = await loadConfig(cwd);
   if (!config) {
@@ -42,36 +48,10 @@ export async function link(args: {
     process.exit(1);
   }
 
-  // Load features
-  const features = await loadAllFeatures(cwd);
-  const feature = findFeatureByName(features, featureName);
-
-  if (!feature) {
-    console.error(`Feature "${featureName}" not found.`);
-    if (features.length > 0) {
-      console.error("Available features:");
-      for (const f of features) {
-        console.error(`  - ${f.filename}`);
-      }
-    } else {
-      console.error("No feature files found. Create one in .requirements/");
-    }
-    process.exit(1);
-  }
-
-  // Find requirement
-  const requirement = feature.data.requirements[reqId];
+  // Load requirement
+  const requirement = await loadRequirement(cwd, path);
   if (!requirement) {
-    console.error(`Requirement "${reqId}" not found in feature.`);
-    const reqIds = Object.keys(feature.data.requirements);
-    if (reqIds.length > 0) {
-      console.error("Available requirements:");
-      for (const id of reqIds) {
-        console.error(`  - ${id}`);
-      }
-    } else {
-      console.error("No requirements in this feature file.");
-    }
+    console.error(`Requirement not found: ${path}`);
     process.exit(1);
   }
 
@@ -85,7 +65,7 @@ export async function link(args: {
 
   // Check for duplicate
   if (
-    requirement.tests.some(
+    requirement.data.tests.some(
       (t) => t.file === file && t.identifier === identifier
     )
   ) {
@@ -101,17 +81,16 @@ export async function link(args: {
   };
 
   // Add to requirement
-  requirement.tests.push(newLink);
+  requirement.data.tests.push(newLink);
 
   // Clear AI assessment since test coverage changed
-  delete requirement.aiAssessment;
+  delete requirement.data.aiAssessment;
 
-  // Save feature file
-  await saveFeature(cwd, feature);
+  // Save requirement file
+  await saveRequirement(cwd, path, requirement.data);
 
   console.log(`Linked: ${file}:${identifier}`);
-  console.log(`  Feature: ${feature.filename}`);
-  console.log(`  Requirement: ${reqId}`);
+  console.log(`  Requirement: ${path}`);
   console.log(`  Hash: ${newLink.hash.slice(0, 12)}...`);
-  console.log(`\nRequirement now has ${requirement.tests.length} test(s) linked.`);
+  console.log(`\nRequirement now has ${requirement.data.tests.length} test(s) linked.`);
 }

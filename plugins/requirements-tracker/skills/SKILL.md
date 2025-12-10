@@ -1,95 +1,80 @@
 ---
 name: requirements-tracker
-description: Track feature requirements with test coverage verification. Use when creating features, linking tests, assessing coverage, or checking staleness. Triggers on "track requirements", "link test to requirement", "check coverage", "assess tests".
+description: Track project requirements with test coverage verification. Use when creating requirements, linking tests, assessing coverage, or checking staleness. Triggers on "track requirements", "link test to requirement", "check coverage", "assess tests".
 ---
 
 # Requirements Tracker
 
-A local YAML-based system for tracking feature requirements with test coverage.
+A local YAML-based system for tracking project requirements with test coverage verification.
 
 ## Folder Structure
 
-Requirements live in `.requirements/` at the project root:
+Requirements live in `.requirements/` at the project root with a folder-based structure:
 
 ```
 .requirements/
 ├── config.yml              # Test runner configuration
-├── FEAT_001_user-auth.yml  # Feature files
-├── FEAT_002_payments.yml
-└── ...
+├── cache.json              # Test hash cache (auto-managed)
+├── ignored-tests.yml       # Tests marked as not needing requirements
+├── auth/                   # Folders can have any name
+│   ├── REQ_login.yml      # One requirement per file
+│   └── session/           # Nested folders allowed
+│       └── REQ_timeout.yml
+└── payments/
+    └── REQ_checkout.yml
 ```
 
-## Feature File Format
+**Key principles:**
+- **One requirement per file** - Each file contains exactly one requirement
+- **REQ_ prefix required** - All requirement files must be named `REQ_*.yml`
+- **Folder organization** - Use folders to group related requirements
+- **Nested folders allowed** - Organize hierarchically as needed
 
-Feature files are YAML with this structure:
+## Requirement File Format
+
+Each `REQ_*.yml` file follows this structure:
 
 ```yaml
-name: User Authentication
-description: Handles user login, logout, and session management
+gherkin: |
+  Given a registered user
+  When they enter valid credentials
+  Then they should be logged in
 
-requirements:
-  1:
-    gherkin: |
-      Given a registered user
-      When they enter valid credentials
-      Then they should be logged in
-    source:
-      type: doc
-      description: "Authentication PRD v2.1, Section 3.1"
-      url: "https://docs.example.com/auth-prd"
-    tests:
-      - file: src/auth.test.ts
-        identifier: "validates login credentials"
-        hash: abc123...
-    aiAssessment:
-      sufficient: true
-      notes: "Tests cover happy path and error handling"
-      assessedAt: 2024-01-15T10:30:00Z
+source:
+  type: doc
+  description: "Auth PRD v2.1"
+  url: "https://docs.example.com/auth"
 
-  2:
-    gherkin: |
-      Given an invalid password
-      When the user attempts to login
-      Then they should see an error message
-    source:
-      type: slack
-      description: "Thread with @sarah about error handling"
-      url: "https://slack.com/archives/C123/p456"
-      date: "2024-01-10"
-    tests: []
-    questions:
-      - question: "How many failed attempts before lockout?"
-        answer: "3 attempts within 15 minutes"
-        answeredAt: 2024-01-15T11:00:00Z
-      - question: "Should we show different messages for wrong email vs wrong password?"
+tests:
+  - file: src/auth.test.ts
+    identifier: "validates login credentials"
+    hash: abc123...
 
-  2.1:
-    gherkin: |
-      Given a locked account
-      When the user attempts to login
-      Then they should see a locked account message
-    source:
-      type: meeting
-      description: "Security review meeting 2024-01-12"
-    tests: []
+aiAssessment:
+  sufficient: true
+  notes: "Coverage adequate"
+  assessedAt: 2024-01-15T10:30:00Z
+
+questions:
+  - question: "Rate limit?"
+    answer: "3 per minute"
+    answeredAt: 2024-01-15T11:00:00Z
 ```
 
-### Creating Feature Files
+### Gherkin (REQUIRED)
 
-Feature files are created **manually** (not via CLI). The naming convention is:
+Every requirement must have a Gherkin-formatted description using Given/When/Then:
 
+```yaml
+gherkin: |
+  Given [precondition]
+  When [action]
+  Then [expected result]
 ```
-FEAT_NNN_descriptive-name.yml
-```
 
-Where NNN is a zero-padded number (001, 002, etc.).
+This ensures requirements are testable and well-defined.
 
-### Requirement IDs
-
-- Use integers for main requirements: 1, 2, 3
-- Use decimals for sub-requirements or late additions: 1.1, 2.1, 2.2
-
-### Sources (REQUIRED)
+### Source (REQUIRED)
 
 Every requirement MUST have a source indicating where it came from. **AI assistants must NEVER guess or fabricate sources.** If the source is unknown, ask the user.
 
@@ -98,7 +83,7 @@ Source types:
 - `slack` - Slack message or thread
 - `email` - Email correspondence
 - `meeting` - Meeting notes or discussion
-- `ticket` - Issue tracker (Jira, Linear, GitHub, etc.)
+- `ticket` - Issue tracker (Jira, etc.)
 - `manual` - Manually added by user (use when user directly specifies requirement)
 
 ```yaml
@@ -116,9 +101,52 @@ source:
 - If user verbally describes a requirement, use `type: manual` with description like "User request via Claude Code session"
 - When in doubt, ASK the user for the source
 
+### Tests
+
+Test links associate the requirement with test files:
+
+```yaml
+tests:
+  - file: src/auth.test.ts
+    identifier: "validates login credentials"
+    hash: abc123...
+  - file: src/auth-integration.test.ts
+    identifier: "end-to-end login flow"
+    hash: def456...
+```
+
+- `file` - Relative path to test file
+- `identifier` - Test name or description (extracted from test code)
+- `hash` - SHA-256 hash of test body (auto-managed, detects changes)
+
+### AI Assessment
+
+Optional field recording AI analysis of test coverage:
+
+```yaml
+aiAssessment:
+  sufficient: true                              # Is coverage adequate?
+  notes: "Tests cover happy path and errors"    # Overall assessment summary
+  assessedAt: 2024-01-15T10:30:00Z             # When assessed
+  testComments:                                 # Per-test analysis (optional)
+    - file: src/auth.test.ts
+      identifier: "validates login credentials"
+      comment: "Good coverage of happy path and validation"
+    - file: src/auth.test.ts
+      identifier: "handles invalid password"
+      comment: "Missing test for rate limiting after failures"
+  suggestedTests:                               # Tests that should be written (optional)
+    - description: "Given 3 failed login attempts When user tries again Then rate limit error"
+      rationale: "No coverage for rate limiting behavior"
+    - description: "Given expired session token When API called Then 401 returned"
+      rationale: "Session expiry not tested"
+```
+
+The `testComments` field allows per-test feedback, while `suggestedTests` captures gaps in coverage.
+
 ### Questions
 
-Requirements can have clarification questions that need answering:
+Optional clarification questions that need answering:
 
 ```yaml
 questions:
@@ -146,37 +174,121 @@ req init
 req init --test-runner "npm test" --test-glob "**/*.spec.ts"
 ```
 
+### Add Requirement
+
+```bash
+req add <path> --gherkin "..." --source-type <type> --source-desc "..." [--source-url "..."]
+```
+
+Creates a new requirement file. Path must be relative to `.requirements/` and must start with `REQ_`.
+
+```bash
+req add auth/REQ_login.yml \
+  --gherkin "Given a registered user\nWhen they enter valid credentials\nThen they should be logged in" \
+  --source-type doc \
+  --source-desc "Auth PRD v2.1, Section 3.1" \
+  --source-url "https://docs.example.com/auth-prd"
+
+req add payments/session/REQ_timeout.yml \
+  --gherkin "Given an active session\nWhen 30 minutes pass with no activity\nThen the session should expire" \
+  --source-type manual \
+  --source-desc "User request via Claude Code"
+```
+
 ### Link Test to Requirement
 
 ```bash
-req link <feature> <req-id> <file:identifier>
+req link <path> <file:identifier>
 ```
 
-Example:
+Links a test to a requirement. Path is relative to `.requirements/`.
+
 ```bash
-req link user-auth 1 src/auth.test.ts:validates login credentials
+req link auth/REQ_login.yml src/auth.test.ts:validates login credentials
+req link payments/REQ_checkout.yml tests/checkout.test.ts:processes payment
+```
+
+The CLI will:
+1. Extract the test body from the test file
+2. Compute a SHA-256 hash
+3. Add the test link to the requirement file
+
+### Unlink Test from Requirement
+
+```bash
+req unlink <path> <file:identifier>
+```
+
+Removes a test link from a requirement.
+
+```bash
+req unlink auth/REQ_login.yml src/auth.test.ts:validates login credentials
 ```
 
 ### Check Coverage
 
 ```bash
-req check [--json]
+req check [path] [--json] [--no-cache]
 ```
 
-Reports coverage and verification status:
+Reports coverage and verification status for all requirements or a specific path.
+
+```bash
+req check                           # Check all requirements
+req check auth/                     # Check all requirements in auth/
+req check auth/REQ_login.yml        # Check specific requirement
+req check --json                    # JSON output
+req check --no-cache                # Force refresh test hashes
+```
+
+Reports:
 - **Untested** - Requirements with no linked tests
 - **Unverified** - Has tests, but no AI assessment yet
 - **Stale** - Tests changed since last AI assessment
 - **Verified** - AI assessed and tests unchanged
 - **Orphaned tests** - Tests not linked to any requirement
+- **Ignored tests** - Tests intentionally not linked
+- **Unanswered questions** - Requirements with pending questions
 
-### Update AI Assessment
+### Assess Test Coverage
 
 ```bash
-req assess <feature> <req-id> --result '{"sufficient": true, "notes": "..."}'
+req assess <path> --result '{"sufficient": bool, "notes": "..."}'
 ```
 
-Called by AI after analyzing test coverage.
+Updates AI assessment for a requirement. Called by AI after analyzing test coverage.
+
+```bash
+req assess auth/REQ_login.yml --result '{"sufficient": true, "notes": "Tests cover happy path and error cases"}'
+req assess payments/REQ_checkout.yml --result '{"sufficient": false, "notes": "Missing test for payment timeout scenario"}'
+```
+
+### Ignore Test
+
+```bash
+req ignore-test <file:identifier> --reason "..."
+```
+
+Marks a test as intentionally not linked to any requirement. Useful for utility tests, setup/teardown, or infrastructure tests that don't map to specific requirements.
+
+```bash
+req ignore-test src/utils.test.ts:helper function tests --reason "Utility tests don't map to requirements"
+req ignore-test src/setup.test.ts:database initialization --reason "Infrastructure test"
+```
+
+Ignored tests are stored in `.requirements/ignored-tests.yml` and won't appear in orphaned test reports.
+
+### Unignore Test
+
+```bash
+req unignore-test <file:identifier>
+```
+
+Removes a test from the ignored list.
+
+```bash
+req unignore-test src/utils.test.ts:helper function tests
+```
 
 ## Verification Status
 
@@ -191,13 +303,21 @@ Requirements have a verification status based on tests and AI assessment:
 
 **Key insight:** A requirement with tests but no assessment is "unverified", not "stale". Stale means the AI assessed it but the tests have since changed.
 
+## Test Hashing and Caching
+
+- The CLI extracts test function bodies and computes SHA-256 hashes
+- Hashes are cached in `.requirements/cache.json` for performance
+- When a test is modified, its hash changes
+- Changed hashes mark the requirement as stale
+- Use `--no-cache` flag to force re-extraction and refresh hashes
+
 ## Workflow for AI Assistants
 
 When asked to assess test coverage:
 
 1. Run `req check --json` to get current status
 2. For each **unverified** or **stale** requirement:
-   a. Read the requirement's gherkin from the feature file
+   a. Read the requirement's gherkin from the file
    b. Read the linked test file(s)
    c. Analyze if tests adequately cover the requirement
    d. Call `req assess` with your assessment
@@ -208,27 +328,22 @@ Example assessment workflow:
 # Get status
 req check --json
 
-# Read the feature file to see full gherkin
-cat .requirements/FEAT_001_user-auth.yml
+# Read the requirement file to see full gherkin
+cat .requirements/auth/REQ_login.yml
 
 # Read the test file
 cat src/auth.test.ts
 
 # After analysis, update assessment
-req assess user-auth 1 --result '{"sufficient": true, "notes": "Test covers login validation including edge cases for empty fields and invalid format"}'
+req assess auth/REQ_login.yml --result '{"sufficient": true, "notes": "Test covers login validation including edge cases for empty fields and invalid format"}'
 ```
-
-## Test Hashing
-
-- The CLI extracts test function bodies and computes SHA-256 hashes
-- When a test is modified, its hash changes
-- Changed hashes mark the requirement as stale
-- Running `req check` updates hashes and clears stale AI assessments
 
 ## Best Practices
 
-1. Write gherkin requirements before writing tests
-2. Link tests as you write them with `req link`
-3. Run `req check` regularly to catch staleness
-4. Use sub-requirements (1.1, 1.2) for edge cases
-5. Keep feature files focused (one feature per file)
+1. **Write requirements before tests** - Define gherkin requirements first, then write tests to satisfy them
+2. **Link tests as you write them** - Use `req link` immediately when creating tests
+3. **Run `req check` regularly** - Catch staleness and missing coverage early
+4. **Use folders for organization** - Group related requirements (auth/, payments/, etc.)
+5. **Keep gherkin focused** - One scenario per requirement; create multiple files for edge cases
+6. **Always provide sources** - Never create requirements without documenting origin
+7. **Use ignored tests appropriately** - Mark utility/infrastructure tests that don't map to requirements
