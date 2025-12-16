@@ -5,6 +5,18 @@
 import { watch, readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { glob } from "glob";
+
+// Docs directory path (src/docs relative to src/ui)
+const docsDir = join(dirname(import.meta.dir), "docs");
+
+// Available documentation pages
+const DOC_PAGES = [
+  { slug: "index", title: "Overview" },
+  { slug: "usage-guide", title: "Usage Guide" },
+  { slug: "cli-reference", title: "CLI Reference" },
+  { slug: "architecture", title: "Architecture" },
+  { slug: "how-it-works", title: "How It Works" },
+];
 import homepage from "./index.html";
 
 // Load .env from the plugin directory (not cwd)
@@ -341,9 +353,39 @@ export async function startServer(args: { cwd: string; port: number }) {
           return chatHandler(req);
         },
       },
+
+      "/api/docs": {
+        GET() {
+          return Response.json({ pages: DOC_PAGES });
+        },
+      },
     },
 
     fetch(req) {
+      const url = new URL(req.url);
+
+      // Handle /api/docs/:slug routes
+      if (url.pathname.startsWith("/api/docs/")) {
+        const slug = url.pathname.slice("/api/docs/".length);
+        const validSlugs = DOC_PAGES.map((p) => p.slug);
+
+        if (!validSlugs.includes(slug)) {
+          return Response.json({ error: "Doc page not found" }, { status: 404 });
+        }
+
+        const filePath = join(docsDir, `${slug}.md`);
+        if (!existsSync(filePath)) {
+          return Response.json({ error: "Doc file not found" }, { status: 404 });
+        }
+
+        try {
+          const content = readFileSync(filePath, "utf-8");
+          return Response.json({ slug, content });
+        } catch (e) {
+          return Response.json({ error: "Failed to read doc file" }, { status: 500 });
+        }
+      }
+
       return new Response("Not found", { status: 404 });
     },
   });

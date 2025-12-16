@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Dashboard, type FilterType } from "./components/Dashboard";
 import { RequirementListItem } from "./components/RequirementListItem";
 import { RequirementDetail } from "./components/RequirementDetail";
+import { DocsViewer } from "./components/DocsViewer";
 import { ClaudeChat } from "./chat";
 import type {
   GroupWithData,
@@ -18,6 +19,8 @@ interface ApiData {
 
 type ApiResponse = ApiData | { error: string };
 
+type ViewMode = "requirements" | "docs";
+
 function App() {
   const [data, setData] = useState<ApiData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +28,9 @@ function App() {
   const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>(null);
   const [showChat, setShowChat] = useState(false);
+  const [view, setView] = useState<ViewMode>("requirements");
+  const [docsPage, setDocsPage] = useState("index");
+  const [docsContent, setDocsContent] = useState("");
 
   const fetchData = useCallback(async () => {
     try {
@@ -65,6 +71,43 @@ function App() {
       eventSource.close();
     };
   }, [fetchData]);
+
+  // Check initial hash on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === "#docs" || hash.startsWith("#docs/")) {
+      setView("docs");
+      const page = hash.split("/")[1] || "index";
+      setDocsPage(page);
+    }
+  }, []);
+
+  // Update hash when view changes
+  useEffect(() => {
+    if (view === "docs") {
+      window.location.hash = docsPage === "index" ? "docs" : `docs/${docsPage}`;
+    } else if (window.location.hash.startsWith("#docs")) {
+      history.replaceState(null, "", window.location.pathname);
+    }
+  }, [view, docsPage]);
+
+  // Fetch docs content when page changes
+  useEffect(() => {
+    if (view === "docs") {
+      fetch(`/api/docs/${docsPage}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.content) {
+            setDocsContent(data.content);
+          } else {
+            setDocsContent("# Error\n\nFailed to load documentation.");
+          }
+        })
+        .catch(() => {
+          setDocsContent("# Error\n\nFailed to load documentation.");
+        });
+    }
+  }, [view, docsPage]);
 
   // Filter requirements based on active filter - must be before early returns
   const filteredGroups = useMemo(() => {
@@ -147,109 +190,136 @@ function App() {
           <h1 className="text-lg font-semibold text-gray-900">
             Requirements Tracker
           </h1>
-          <button
-            onClick={() => setShowChat(!showChat)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              showChat
-                ? "bg-violet-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {showChat ? "Hide Chat" : "Chat"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setView(view === "docs" ? "requirements" : "docs")}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                view === "docs"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {view === "docs" ? "Back" : "Docs"}
+            </button>
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                showChat
+                  ? "bg-violet-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {showChat ? "Hide Chat" : "Chat"}
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Dashboard - compact filter bar */}
-      <div className="flex-none px-4 py-2 bg-white border-b border-gray-200">
-        <Dashboard
-          summary={data.summary}
-          activeFilter={filter}
-          onFilterChange={setFilter}
-        />
-      </div>
-
-      {/* Main content: master-detail layout */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left panel: scrollable list */}
-        <div className="w-80 flex-none border-r border-gray-200 bg-white flex flex-col">
-          <div className="flex-none px-3 py-2 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-sm font-medium text-gray-700">
-              {filter ? `Filtered (${filteredCount})` : `Requirements (${allRequirements.length})`}
-            </h2>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2">
-            {filteredGroups.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm">
-                {filter ? "No matching requirements" : "No requirements found"}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredGroups.map((group) => (
-                  <div key={group.path}>
-                    <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide px-2 mb-1">
-                      {group.path || "(root)"}
-                    </h3>
-                    <div className="space-y-1">
-                      {group.requirements.map((req) => (
-                        <RequirementListItem
-                          key={req.id}
-                          requirement={req}
-                          isSelected={req.id === selectedReqId}
-                          onClick={() => setSelectedReqId(req.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Orphaned tests at bottom of list */}
-            {data.orphanedTests.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <h3 className="text-xs font-medium text-orange-600 uppercase tracking-wide px-2 mb-2">
-                  Orphaned Tests ({data.orphanedTests.length})
-                </h3>
-                <div className="space-y-1 px-2">
-                  {data.orphanedTests.slice(0, 10).map((test, idx) => (
-                    <div
-                      key={idx}
-                      className="text-xs font-mono text-gray-500 truncate"
-                      title={`${test.file}:${test.identifier}`}
-                    >
-                      {test.identifier}
-                    </div>
-                  ))}
-                  {data.orphanedTests.length > 10 && (
-                    <div className="text-xs text-gray-400">
-                      +{data.orphanedTests.length - 10} more
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+      {view === "docs" ? (
+        /* Documentation view */
+        <div className="flex-1 min-h-0">
+          <DocsViewer
+            content={docsContent}
+            currentPage={docsPage}
+            onNavigate={setDocsPage}
+            onClose={() => setView("requirements")}
+          />
         </div>
-
-        {/* Middle panel: detail view */}
-        <div className="flex-1 bg-white min-w-0">
-          <RequirementDetail requirement={selectedReq} />
-        </div>
-
-        {/* Right panel: Chat (collapsible) */}
-        {showChat && (
-          <div className="w-96 flex-none border-l border-gray-200 bg-white flex flex-col">
-            <ClaudeChat
-              endpoint="/api/chat"
-              headerTitle="Requirements Assistant"
-              placeholder="Ask about requirements..."
-              persistSession={false}
-              className="h-full border-0 rounded-none shadow-none"
+      ) : (
+        /* Requirements view */
+        <>
+          {/* Dashboard - compact filter bar */}
+          <div className="flex-none px-4 py-2 bg-white border-b border-gray-200">
+            <Dashboard
+              summary={data.summary}
+              activeFilter={filter}
+              onFilterChange={setFilter}
             />
           </div>
-        )}
-      </div>
+
+          {/* Main content: master-detail layout */}
+          <div className="flex-1 flex min-h-0">
+            {/* Left panel: scrollable list */}
+            <div className="w-80 flex-none border-r border-gray-200 bg-white flex flex-col">
+              <div className="flex-none px-3 py-2 border-b border-gray-200 bg-gray-50">
+                <h2 className="text-sm font-medium text-gray-700">
+                  {filter ? `Filtered (${filteredCount})` : `Requirements (${allRequirements.length})`}
+                </h2>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                {filteredGroups.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    {filter ? "No matching requirements" : "No requirements found"}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredGroups.map((group) => (
+                      <div key={group.path}>
+                        <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide px-2 mb-1">
+                          {group.path || "(root)"}
+                        </h3>
+                        <div className="space-y-1">
+                          {group.requirements.map((req) => (
+                            <RequirementListItem
+                              key={req.id}
+                              requirement={req}
+                              isSelected={req.id === selectedReqId}
+                              onClick={() => setSelectedReqId(req.id)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Orphaned tests at bottom of list */}
+                {data.orphanedTests.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <h3 className="text-xs font-medium text-orange-600 uppercase tracking-wide px-2 mb-2">
+                      Orphaned Tests ({data.orphanedTests.length})
+                    </h3>
+                    <div className="space-y-1 px-2">
+                      {data.orphanedTests.slice(0, 10).map((test, idx) => (
+                        <div
+                          key={idx}
+                          className="text-xs font-mono text-gray-500 truncate"
+                          title={`${test.file}:${test.identifier}`}
+                        >
+                          {test.identifier}
+                        </div>
+                      ))}
+                      {data.orphanedTests.length > 10 && (
+                        <div className="text-xs text-gray-400">
+                          +{data.orphanedTests.length - 10} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Middle panel: detail view */}
+            <div className="flex-1 bg-white min-w-0">
+              <RequirementDetail requirement={selectedReq} />
+            </div>
+
+            {/* Right panel: Chat (collapsible) */}
+            {showChat && (
+              <div className="w-96 flex-none border-l border-gray-200 bg-white flex flex-col">
+                <ClaudeChat
+                  endpoint="/api/chat"
+                  headerTitle="Requirements Assistant"
+                  placeholder="Ask about requirements..."
+                  persistSession={false}
+                  className="h-full border-0 rounded-none shadow-none"
+                />
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

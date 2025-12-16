@@ -10,6 +10,7 @@ import { assess } from "./commands/assess";
 import { ignoreTest } from "./commands/ignore-test";
 import { unignoreTest } from "./commands/unignore-test";
 import { ui } from "./commands/ui";
+import { docs } from "./commands/docs";
 
 const HELP = `
 req - Track requirements with test coverage
@@ -28,6 +29,7 @@ COMMANDS:
   ignore-test <file:id> --reason "..."              Mark test as intentionally unlinked
   unignore-test <file:id>                           Remove test from ignored list
   ui [--port <number>]                              Start web UI for viewing requirements
+  docs [--port <number>]                            Open documentation in browser
 
 GLOBAL OPTIONS:
   --cwd <path>  Run in specified directory (default: current directory)
@@ -381,6 +383,29 @@ EXAMPLES:
           break;
         }
         await ui({
+          cwd,
+          port: args.port ? parseInt(args.port as string, 10) : 3000,
+        });
+        break;
+
+      case "docs":
+        if (args.help || args.h) {
+          console.log(`
+req docs - Open documentation in browser
+
+USAGE:
+  req docs [options]
+
+OPTIONS:
+  --port <number>  Port to run server on (default: 3000)
+
+EXAMPLES:
+  req docs
+  req docs --port 8080
+          `.trim());
+          break;
+        }
+        await docs({
           cwd,
           port: args.port ? parseInt(args.port as string, 10) : 3000,
         });
