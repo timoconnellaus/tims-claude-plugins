@@ -2,10 +2,38 @@
  * Bun web server for requirements tracker UI
  */
 
-import { watch } from "fs";
+import { watch, readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { glob } from "glob";
 import homepage from "./index.html";
+
+// Load .env from the plugin directory (not cwd)
+// Use sync methods since this runs at module load time
+const pluginDir = dirname(dirname(dirname(import.meta.dir)));
+const envPath = join(pluginDir, ".env");
+try {
+  if (existsSync(envPath)) {
+    const envContent = readFileSync(envPath, "utf-8");
+    for (const line of envContent.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#")) {
+        const eqIndex = trimmed.indexOf("=");
+        if (eqIndex > 0) {
+          const key = trimmed.slice(0, eqIndex);
+          const value = trimmed.slice(eqIndex + 1);
+          if (!process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+      }
+    }
+    console.log("Loaded .env from:", envPath);
+  } else {
+    console.warn("No .env file found at:", envPath);
+  }
+} catch (e) {
+  console.error("Error loading .env:", e);
+}
 import {
   loadConfig,
   loadAllRequirements,
@@ -21,6 +49,9 @@ import type {
   ImplementationStatus,
   CheckSummary,
 } from "../lib/types";
+import { createClaudeChatHandler } from "./handler";
+
+// Note: chatHandler is created in startServer() with the correct cwd and plugin path
 
 // SSE clients for live reload
 const clients = new Set<ReadableStreamDefaultController>();
@@ -217,6 +248,16 @@ function broadcastRefresh() {
 export async function startServer(args: { cwd: string; port: number }) {
   const { cwd, port } = args;
 
+  // Create chat handler with the requirements-tracker plugin loaded
+  const chatHandler = createClaudeChatHandler({
+    defaultModel: 'opus',
+    requireToolApproval: false,
+    cwd,
+    plugins: [
+      { type: 'local', path: pluginDir },
+    ],
+  });
+
   // Watch for file changes in .requirements directory
   const reqDir = getRequirementsDir(cwd);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -262,6 +303,7 @@ export async function startServer(args: { cwd: string; port: number }) {
   const server = Bun.serve({
     port,
     development: true,
+    idleTimeout: 0,
     routes: {
       "/": homepage,
 
@@ -291,6 +333,12 @@ export async function startServer(args: { cwd: string; port: number }) {
               Connection: "keep-alive",
             },
           });
+        },
+      },
+
+      "/api/chat": {
+        POST: async (req: Request) => {
+          return chatHandler(req);
         },
       },
     },

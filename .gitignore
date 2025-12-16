@@ -3,3 +3,4 @@ node_modules/
 *.lockb
 .DS_Store
 .claude/
+.env

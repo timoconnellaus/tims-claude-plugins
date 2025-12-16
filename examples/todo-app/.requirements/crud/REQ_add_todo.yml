@@ -12,7 +12,7 @@ source:
 tests:
   - file: tests/todo.test.ts
     identifier: addTodo creates a new todo
-    hash: 5110199830b4066c9bd8871b295144f5c2740500dc8394a01ba791299525265b
+    hash: eac8f40f3231ea44eb1b2d6c3975382b689e2068adf3d0447141712733870217
   - file: tests/todo.test.ts
     identifier: addTodo trims whitespace from title
     hash: 61a927f9f4b6cc9878783df8dc9c592fb11eefd724a8103f42e93a7f6fb06ef9
@@ -22,8 +22,3 @@ tests:
   - file: tests/todo.test.ts
     identifier: listTodos returns all todos
     hash: 279555481d5f5e2ad3b98e521c2e2b434bd110f26bef7b047388ce9d0744dd37
-aiAssessment:
-  sufficient: true
-  notes: "Tests cover: creating todo with ID/title/timestamp, whitespace trimming,
-    listing all todos, and retrieving by ID."
-  assessedAt: 2025-12-10T00:27:47.893Z

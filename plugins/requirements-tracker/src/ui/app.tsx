@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Dashboard, type FilterType } from "./components/Dashboard";
 import { RequirementListItem } from "./components/RequirementListItem";
 import { RequirementDetail } from "./components/RequirementDetail";
+import { ClaudeChat } from "./chat";
 import type {
   GroupWithData,
   RequirementWithData,
@@ -23,6 +24,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>(null);
+  const [showChat, setShowChat] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -141,10 +143,20 @@ function App() {
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <header className="flex-none bg-white shadow-sm border-b border-gray-200">
-        <div className="px-4 py-3">
+        <div className="px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-900">
             Requirements Tracker
           </h1>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              showChat
+                ? "bg-violet-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {showChat ? "Hide Chat" : "Chat"}
+          </button>
         </div>
       </header>
 
@@ -220,10 +232,23 @@ function App() {
           </div>
         </div>
 
-        {/* Right panel: detail view (fixed, not scrolling with list) */}
+        {/* Middle panel: detail view */}
         <div className="flex-1 bg-white min-w-0">
           <RequirementDetail requirement={selectedReq} />
         </div>
+
+        {/* Right panel: Chat (collapsible) */}
+        {showChat && (
+          <div className="w-96 flex-none border-l border-gray-200 bg-white flex flex-col">
+            <ClaudeChat
+              endpoint="/api/chat"
+              headerTitle="Requirements Assistant"
+              placeholder="Ask about requirements..."
+              persistSession={false}
+              className="h-full border-0 rounded-none shadow-none"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
