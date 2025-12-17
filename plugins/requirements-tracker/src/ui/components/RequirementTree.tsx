@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import type { GroupWithData, RequirementWithData } from "./RequirementList";
 
 interface TreeNode {
@@ -13,6 +13,9 @@ interface RequirementTreeProps {
   groups: GroupWithData[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  expanded: Set<string>;
+  onSetExpanded: (expanded: Set<string>) => void;
+  onToggle: (path: string) => void;
 }
 
 function buildTree(groups: GroupWithData[]): TreeNode[] {
@@ -214,39 +217,41 @@ function TreeNodeComponent({
   );
 }
 
+function collectAllFolderPaths(nodes: TreeNode[]): Set<string> {
+  const paths = new Set<string>();
+  const collect = (nodeList: TreeNode[]) => {
+    for (const node of nodeList) {
+      if (node.isFolder) {
+        paths.add(node.path);
+        collect(node.children);
+      }
+    }
+  };
+  collect(nodes);
+  return paths;
+}
+
 export function RequirementTree({
   groups,
   selectedId,
   onSelect,
+  expanded,
+  onSetExpanded,
+  onToggle,
 }: RequirementTreeProps) {
   const tree = useMemo(() => buildTree(groups), [groups]);
+  const hasInitialized = useRef(false);
 
-  // Start with all folders expanded
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const paths = new Set<string>();
-    const collectPaths = (nodes: TreeNode[]) => {
-      for (const node of nodes) {
-        if (node.isFolder) {
-          paths.add(node.path);
-          collectPaths(node.children);
-        }
+  // Initialize with all folders expanded if URL has no expanded state
+  useEffect(() => {
+    if (!hasInitialized.current && expanded.size === 0 && tree.length > 0) {
+      hasInitialized.current = true;
+      const allPaths = collectAllFolderPaths(tree);
+      if (allPaths.size > 0) {
+        onSetExpanded(allPaths);
       }
-    };
-    collectPaths(tree);
-    return paths;
-  });
-
-  const handleToggle = (path: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) {
-        next.delete(path);
-      } else {
-        next.add(path);
-      }
-      return next;
-    });
-  };
+    }
+  }, [tree, expanded, onSetExpanded]);
 
   if (tree.length === 0) {
     return null;
@@ -260,7 +265,7 @@ export function RequirementTree({
           node={node}
           depth={0}
           expanded={expanded}
-          onToggle={handleToggle}
+          onToggle={onToggle}
           selectedId={selectedId}
           onSelect={onSelect}
         />

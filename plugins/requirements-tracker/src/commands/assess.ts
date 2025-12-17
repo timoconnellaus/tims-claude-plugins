@@ -7,6 +7,7 @@ import {
   loadRequirement,
   saveRequirement,
 } from "../lib/store";
+import { getTestsWithCache } from "../lib/cache";
 import type {
   AIAssessment,
   TestComment,
@@ -150,6 +151,21 @@ export async function assess(args: {
   if (!requirement) {
     console.error(`Requirement not found: ${path}`);
     process.exit(1);
+  }
+
+  // Update test hashes to current values
+  // This ensures the assessment is tied to the actual test code that was evaluated
+  if (requirement.data.tests.length > 0) {
+    const { tests: allTests } = await getTestsWithCache(cwd, config.testGlob, true);
+    const hashMap = new Map(allTests.map((t) => [`${t.file}:${t.identifier}`, t.hash]));
+
+    for (const test of requirement.data.tests) {
+      const key = `${test.file}:${test.identifier}`;
+      const currentHash = hashMap.get(key);
+      if (currentHash) {
+        test.hash = currentHash;
+      }
+    }
   }
 
   // Compute sufficient from criteria

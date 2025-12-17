@@ -25,7 +25,7 @@ describe("Todo CRUD operations", () => {
   test("addTodo creates a new todo", () => {
     const todo = addTodo(store, "Buy groceries");
 
-    expect(todo.title).toBe("Buy groceriess");
+    expect(todo.title).toBe("Buy groceries");
     expect(todo.completed).toBe(false);
     expect(todo.id).toBeDefined();
     expect(todo.createdAt).toBeInstanceOf(Date);
@@ -35,6 +35,17 @@ describe("Todo CRUD operations", () => {
     const todo = addTodo(store, "  Buy groceries  ");
 
     expect(todo.title).toBe("Buy groceries");
+  });
+
+  test("addTodo creates unique IDs for multiple todos", () => {
+    const todo1 = addTodo(store, "First todo");
+    const todo2 = addTodo(store, "Second todo");
+    const todo3 = addTodo(store, "Third todo");
+
+    const ids = [todo1.id, todo2.id, todo3.id];
+    const uniqueIds = new Set(ids);
+
+    expect(uniqueIds.size).toBe(3);
   });
 
   test("addTodo throws on empty title", () => {

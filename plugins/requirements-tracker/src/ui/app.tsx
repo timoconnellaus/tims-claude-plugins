@@ -1,10 +1,11 @@
 import { createRoot } from "react-dom/client";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Dashboard, type FilterType } from "./components/Dashboard";
+import { Dashboard } from "./components/Dashboard";
 import { RequirementTree } from "./components/RequirementTree";
 import { RequirementDetail } from "./components/RequirementDetail";
 import { DocsViewer } from "./components/DocsViewer";
 import { ClaudeChat, type ClaudeChatHandle } from "./chat";
+import { useUrlState } from "./hooks/useUrlState";
 import type {
   GroupWithData,
   RequirementWithData,
@@ -19,19 +20,18 @@ interface ApiData {
 
 type ApiResponse = ApiData | { error: string };
 
-type ViewMode = "requirements" | "docs";
-
 function App() {
   const [data, setData] = useState<ApiData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedReqId, setSelectedReqId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>(null);
   const [showChat, setShowChat] = useState(false);
-  const [view, setView] = useState<ViewMode>("requirements");
-  const [docsPage, setDocsPage] = useState("index");
   const [docsContent, setDocsContent] = useState("");
   const [showLegend, setShowLegend] = useState(false);
+
+  // URL-based state management
+  const [urlState, urlSetters] = useUrlState();
+  const { req: selectedReqId, filter, view, doc: docsPage, expanded } = urlState;
+  const { setReq: setSelectedReqId, setFilter, setView, setDoc: setDocsPage, setExpanded, toggleExpanded } = urlSetters;
 
   const chatRef = useRef<ClaudeChatHandle>(null);
 
@@ -73,26 +73,8 @@ function App() {
     return () => {
       eventSource.close();
     };
-  }, [fetchData]);
-
-  // Check initial hash on mount
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === "#docs" || hash.startsWith("#docs/")) {
-      setView("docs");
-      const page = hash.split("/")[1] || "index";
-      setDocsPage(page);
-    }
-  }, []);
-
-  // Update hash when view changes
-  useEffect(() => {
-    if (view === "docs") {
-      window.location.hash = docsPage === "index" ? "docs" : `docs/${docsPage}`;
-    } else if (window.location.hash.startsWith("#docs")) {
-      history.replaceState(null, "", window.location.pathname);
-    }
-  }, [view, docsPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - fetchData is stable, and we only want one SSE connection
 
   // Fetch docs content when page changes
   useEffect(() => {
@@ -494,6 +476,9 @@ req assess ${req.id} --result '{...}'
                     groups={filteredGroups}
                     selectedId={selectedReqId}
                     onSelect={setSelectedReqId}
+                    expanded={expanded}
+                    onSetExpanded={setExpanded}
+                    onToggle={toggleExpanded}
                   />
                 )}
 

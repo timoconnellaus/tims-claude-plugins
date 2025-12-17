@@ -1,12 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2025-12-10T22:42:19.969Z",
+  "generatedAt": "2025-12-17T01:16:33.975Z",
   "fileMtimes": {
-    "tests/todo.test.ts": 1765406539778
+    "tests/todo.test.ts": 1765934179557
   },
   "tests": {
-    "tests/todo.test.ts:addTodo creates a new todo": "eac8f40f3231ea44eb1b2d6c3975382b689e2068adf3d0447141712733870217",
+    "tests/todo.test.ts:addTodo creates a new todo": "5110199830b4066c9bd8871b295144f5c2740500dc8394a01ba791299525265b",
     "tests/todo.test.ts:addTodo trims whitespace from title": "61a927f9f4b6cc9878783df8dc9c592fb11eefd724a8103f42e93a7f6fb06ef9",
+    "tests/todo.test.ts:addTodo creates unique IDs for multiple todos": "6ac98179dc0c6a10f6ef9f217b87c84f7ead7e1a39845c2bdbd0cc63bf18e0db",
     "tests/todo.test.ts:addTodo throws on empty title": "24deb6ad220f530d5df596eda8ff0b172cb44c50ad84a0d35b22156c04f3f8b8",
     "tests/todo.test.ts:getTodo retrieves a todo by id": "7c414559bb32a06e73d74fbfe0a71aaf1d20193fca27d2ba1f0d76c17e3efde5",
     "tests/todo.test.ts:getTodo returns undefined for non-existent id": "0c45b993a62e7c46e499353b200034e5625a8513a37bc2c89154061440edc5e6",

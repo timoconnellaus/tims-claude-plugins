@@ -379,7 +379,7 @@ Reports:
 req assess <path> --result '{"sufficient": bool, "notes": "..."}'
 ```
 
-Updates AI assessment for a requirement. Called by AI after analyzing test coverage.
+Updates AI assessment for a requirement. Called by AI after analyzing test coverage. This command also **updates test hashes** to their current values, ensuring the assessment is tied to the actual test code that was evaluated.
 
 ```bash
 req assess auth/REQ_login.yml --result '{"sufficient": true, "notes": "Tests cover happy path and error cases"}'

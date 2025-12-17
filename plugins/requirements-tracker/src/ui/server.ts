@@ -335,6 +335,66 @@ export async function startServer(args: { cwd: string; port: number }) {
     plugins: [
       { type: 'local', path: pluginDir },
     ],
+    // Load all settings sources: user (~/.claude), project (.claude), and local (.claude/settings.local.json)
+    // This also loads CLAUDE.md files when 'project' is included
+    settingSources: ['user', 'project', 'local'],
+    // Use Claude Code's system prompt with custom additions for requirements tracking
+    systemPrompt: {
+      type: 'preset',
+      preset: 'claude_code',
+      append: `
+You are assisting with requirements tracking and verification. You have access to the 'req' CLI tool for managing requirements.
+
+## CLI Commands
+
+\`\`\`
+req init [options]                                    Create .requirements/ folder
+    --test-runner <cmd>  Test runner command (default: bun test)
+    --test-glob <glob>   Test file glob (default: **/*.test.{ts,js})
+    --force              Overwrite existing config
+
+req add <path> --gherkin "..." --source-type <type> --source-desc "..."
+    Create a new requirement in Gherkin format (Given/When/Then)
+    --priority <level>   Priority: critical, high, medium, low
+    --depends-on <path>  Dependency path (repeatable)
+    --force              Overwrite if exists
+
+req link <path> <file:identifier>                     Link a test to a requirement
+req unlink <path> <file:identifier>                   Remove a test link
+
+req status <path> [--done | --planned]                Get or set implementation status
+
+req check [path] [--json] [--no-cache]                Check test coverage status
+    Reports: untested, unverified, stale, verified, and orphaned tests
+
+req assess <path> --result '<json>'                   Update AI assessment for a requirement
+    Criteria (all required): noBugsInTestCode, sufficientCoverage, meaningfulAssertions,
+    correctTestSubject, happyPathCovered, edgeCasesAddressed, errorScenariosHandled,
+    wouldFailIfBroke
+    Each criterion: { "result": "pass"|"fail"|"na", "note": "optional" }
+
+req ignore-test <file:identifier> --reason "..."      Mark test as intentionally unlinked
+req unignore-test <file:identifier>                   Remove test from ignored list
+
+req ui [--port <number>]                              Start web UI (default: port 3000)
+req docs [--port <number>]                            Open documentation in browser
+\`\`\`
+
+## Global Options
+- \`--cwd <path>\` - Run in specified directory (default: current directory)
+- \`--help, -h\` - Show help for any command
+
+## Examples
+\`\`\`bash
+req add auth/REQ_login.yml --gherkin "Given user enters valid credentials When they submit Then they are logged in" --source-type doc --source-desc "PRD v2.1"
+req link auth/REQ_login.yml src/auth.test.ts:validates login
+req check --json
+req assess auth/REQ_login.yml --result '{"criteria": {"noBugsInTestCode": {"result": "pass"}, ...}, "notes": "..."}'
+\`\`\`
+
+When verifying requirements, analyze the linked tests to determine if they adequately cover the requirement's Gherkin scenarios.
+`,
+    },
     // Auto-approve req commands and file reading tools
     canUseTool: async (toolName, input) => {
       // Always allow read-only tools needed for verification
@@ -425,7 +485,6 @@ export async function startServer(args: { cwd: string; port: number }) {
               // Client disconnected - will be cleaned up on next broadcast
             },
           });
-
           return new Response(stream, {
             headers: {
               "Content-Type": "text/event-stream",
@@ -437,7 +496,7 @@ export async function startServer(args: { cwd: string; port: number }) {
       },
 
       "/api/chat": {
-        POST: async (req: Request) => {
+        async POST(req) {
           return chatHandler(req);
         },
       },
@@ -449,7 +508,7 @@ export async function startServer(args: { cwd: string; port: number }) {
       },
     },
 
-    fetch(req) {
+    async fetch(req) {
       const url = new URL(req.url);
 
       // Handle /api/docs/:slug routes

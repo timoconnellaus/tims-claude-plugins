@@ -3,6 +3,7 @@ import {
   type CanUseTool,
   type PermissionResult,
   type SdkPluginConfig,
+  type SettingSource,
 } from '@anthropic-ai/claude-agent-sdk';
 import type { SendMessageRequest, ChatMessage, ContentBlock, PermissionResponse } from '../chat/types';
 import { sessionManager } from './session-manager';
@@ -41,7 +42,6 @@ export interface SandboxSettings {
 export interface ClaudeChatHandlerConfig {
   defaultModel?: string;
   defaultMaxTurns?: number;
-  defaultSystemPrompt?: string;
   /**
    * When true, prompts the user in the UI for tool approval.
    * When false or undefined, uses the canUseTool callback if provided,
@@ -68,6 +68,23 @@ export interface ClaudeChatHandlerConfig {
    * When enabled, bash commands run in a sandbox environment.
    */
   sandbox?: SandboxSettings;
+  /**
+   * Which filesystem settings to load.
+   * - 'user': Global user settings (~/.claude/settings.json)
+   * - 'project': Shared project settings (.claude/settings.json) - also loads CLAUDE.md files
+   * - 'local': Local project settings (.claude/settings.local.json)
+   *
+   * When omitted, no filesystem settings are loaded.
+   * Set to ['user', 'project', 'local'] to load all settings.
+   */
+  settingSources?: SettingSource[];
+  /**
+   * System prompt configuration.
+   * - Pass a string for a completely custom prompt
+   * - Pass { type: 'preset', preset: 'claude_code' } to use Claude Code's default system prompt
+   * - Pass { type: 'preset', preset: 'claude_code', append: '...' } to use the default + custom additions
+   */
+  systemPrompt?: string | { type: 'preset'; preset: 'claude_code'; append?: string };
 }
 
 /**
@@ -77,12 +94,13 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
   const {
     defaultModel = 'claude-sonnet-4-5-20250929',
     defaultMaxTurns = 20,
-    defaultSystemPrompt,
     requireToolApproval = false,
     canUseTool: configCanUseTool,
     plugins = [],
     cwd = process.cwd(),
     sandbox,
+    settingSources,
+    systemPrompt,
   } = config;
 
   return async function handleRequest(request: Request): Promise<Response> {
@@ -100,6 +118,7 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
     try {
       // Parse request body
       const body = await request.json();
+
 
       // Handle permission response (separate from message requests)
       if (body.type === 'permission_response') {
@@ -140,6 +159,7 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
         const messageId = crypto.randomUUID();
         const startTime = Date.now();
         let initSent = false;
+
 
         // Create UI-based canUseTool handler if requireToolApproval is enabled
         const uiCanUseTool: CanUseTool | undefined = requireToolApproval
@@ -189,8 +209,11 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
               plugins,
               cwd,
               sandbox,
+              settingSources,
+              systemPrompt,
             },
           });
+
 
           let fullContent = '';
           let inputTokens = 0;
