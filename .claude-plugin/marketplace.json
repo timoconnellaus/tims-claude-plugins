@@ -4,14 +4,18 @@
     "name": "Tim"
   },
   "metadata": {
-    "description": "A collection of Claude Code skill plugins"
+    "description": "A collection of Claude Code skill plugins",
+    "version": "4.1.0"
   },
   "plugins": [
     {
       "name": "requirements-tracker",
-      "source": "./plugins/requirements-tracker",
       "description": "Track project requirements with test verification, source tracking, and history",
-      "version": "4.1.0"
+      "source": "./plugins/requirements-tracker",
+      "strict": false,
+      "skills": [
+        "./skills/requirements-tracker"
+      ]
     }
   ]
 }

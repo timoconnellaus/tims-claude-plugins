@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This repository contains Claude Code plugins. Each plugin is a self-contained package in `plugins/` with its own `plugin.json` manifest.
+This repository contains Claude Code plugins using the `strict: false` pattern (no per-plugin plugin.json files). Plugins are defined in `.claude-plugin/marketplace.json` with explicit skill paths.
 
 ## Commands
 
@@ -15,27 +15,27 @@ bun run typecheck
 
 ## Versioning
 
-When bumping plugin versions, update **all three** of these files:
+When bumping plugin versions, update **both** of these files:
 
-1. `plugins/<plugin-name>/.claude-plugin/plugin.json` - Plugin manifest version
-2. `plugins/<plugin-name>/package.json` - NPM package version
-3. `.claude-plugin/marketplace.json` - Marketplace listing version
+1. `plugins/<plugin-name>/package.json` - NPM package version
+2. `.claude-plugin/marketplace.json` - Marketplace `metadata.version` field
 
-All three must be kept in sync.
+Both must be kept in sync.
 
 ## Architecture
 
 ### Plugin Structure
 
-Each plugin follows this structure:
+This repo uses Anthropic's plugin pattern with `strict: false`:
 ```
+.claude-plugin/
+└── marketplace.json     # Defines all plugins with strict: false and explicit skills
+
 plugins/<plugin-name>/
-├── .claude-plugin/
-│   └── plugin.json      # Plugin manifest (name, version, description, author)
-├── package.json         # NPM dependencies
+├── package.json         # NPM dependencies and version
 ├── tsconfig.json        # TypeScript config
-├── commands/            # Slash command definitions (.md files) - auto-discovered
-├── skills/              # Skill definitions (.md files) - auto-discovered
+├── commands/            # Slash command definitions (.md files)
+├── skills/              # Skill definitions (SKILL.md files)
 └── src/
     ├── cli.ts           # CLI entrypoint
     ├── commands/        # Command implementations
