@@ -1,12 +1,54 @@
 import { useMemo, useEffect, useRef } from "react";
 import type { GroupWithData, RequirementWithData } from "./RequirementList";
 
+// Health badge types and configuration
+type HealthBadge = "blocked" | "stale" | "needs-tests" | "planned" | "unverified" | "verified";
+
+const BADGE_CONFIG: Record<HealthBadge, { color: string; label: string; order: number }> = {
+  blocked:       { color: "bg-red-500",    label: "blocked",      order: 0 },
+  stale:         { color: "bg-orange-400", label: "stale",        order: 1 },
+  "needs-tests": { color: "bg-yellow-400", label: "needs tests",  order: 2 },
+  planned:       { color: "bg-gray-300",   label: "planned",      order: 3 },
+  unverified:    { color: "bg-blue-400",   label: "unverified",   order: 4 },
+  verified:      { color: "bg-green-500",  label: "verified",     order: 5 },
+};
+
+function computeBadge(req: RequirementWithData): HealthBadge {
+  if (req.dependencyIssues && req.dependencyIssues.length > 0) return "blocked";
+  if (req.verification === "stale") return "stale";
+  if (req.status === "done" && req.testCount === 0) return "needs-tests";
+  if (req.status === "planned") return "planned";
+  if (req.verification === "unverified") return "unverified";
+  return "verified";
+}
+
 interface TreeNode {
   name: string;
   path: string;
   isFolder: boolean;
   children: TreeNode[];
   requirement?: RequirementWithData;
+  badge?: HealthBadge;                    // For requirements
+  distribution?: Map<HealthBadge, number>; // For folders
+}
+
+// Compute distribution of badges for a folder (recursively includes nested folders)
+function computeDistribution(node: TreeNode): Map<HealthBadge, number> {
+  const dist = new Map<HealthBadge, number>();
+
+  for (const child of node.children) {
+    if (child.isFolder) {
+      const childDist = computeDistribution(child);
+      child.distribution = childDist;
+      for (const [badge, count] of childDist) {
+        dist.set(badge, (dist.get(badge) || 0) + count);
+      }
+    } else if (child.badge) {
+      dist.set(child.badge, (dist.get(child.badge) || 0) + 1);
+    }
+  }
+
+  return dist;
 }
 
 interface RequirementTreeProps {
@@ -60,6 +102,7 @@ function buildTree(groups: GroupWithData[]): TreeNode[] {
         isFolder: false,
         children: [],
         requirement: req,
+        badge: computeBadge(req),
       });
     }
   }
@@ -75,6 +118,13 @@ function buildTree(groups: GroupWithData[]): TreeNode[] {
     }
   };
   sortChildren(root);
+
+  // Compute badge distributions for all folders (bottom-up)
+  for (const child of root.children) {
+    if (child.isFolder) {
+      child.distribution = computeDistribution(child);
+    }
+  }
 
   return root.children;
 }
@@ -100,6 +150,13 @@ function TreeNodeComponent({
   const paddingLeft = depth * 16;
 
   if (node.isFolder) {
+    // Sort distribution by badge order (worst first)
+    const sortedDist = node.distribution
+      ? Array.from(node.distribution.entries()).sort(
+          (a, b) => BADGE_CONFIG[a[0]].order - BADGE_CONFIG[b[0]].order
+        )
+      : [];
+
     return (
       <div>
         <button
@@ -111,6 +168,16 @@ function TreeNodeComponent({
             {isExpanded ? "▼" : "▶"}
           </span>
           <span className="font-medium text-gray-700 truncate">{node.name}/</span>
+          {sortedDist.length > 0 && (
+            <span className="ml-2 flex gap-2 text-xs flex-none">
+              {sortedDist.map(([badge, count]) => (
+                <span key={badge} className="flex items-center gap-1">
+                  <span className={`w-2 h-2 rounded-full ${BADGE_CONFIG[badge].color}`} />
+                  <span className="text-gray-500">{count}</span>
+                </span>
+              ))}
+            </span>
+          )}
         </button>
         {isExpanded && (
           <div>
@@ -134,31 +201,8 @@ function TreeNodeComponent({
   // Requirement leaf node
   const req = node.requirement!;
   const isSelected = req.id === selectedId;
-
-  // Indicator data
-  const hasGherkin = Boolean(req.gherkin?.trim());
-  const hasNfrs = Boolean(req.nfrs && req.nfrs.length > 0);
-  const hasTests = req.testCount > 0;
-  const hasTestIssues = req.aiAssessment?.testComments?.some(tc => tc.hasIssue) ?? false;
-  const coverageSufficient = req.coverageSufficient;
-  const isDone = req.status === "done";
-  const isVerified = req.verification === "verified";
-  const needsVerification = req.verification === "unverified" || req.verification === "stale";
-
-  // Dependencies
-  const totalDeps = req.dependencies?.length || 0;
-  const blockedDeps = req.dependencyIssues?.length || 0;
-  const passingDeps = totalDeps - blockedDeps;
-  const depsAllPassing = totalDeps > 0 && blockedDeps === 0;
-
-  // Priority styling
-  const priorityStyles: Record<string, { color: string; label: string }> = {
-    critical: { color: 'text-red-600', label: 'P1' },
-    high: { color: 'text-orange-500', label: 'P2' },
-    medium: { color: 'text-yellow-600', label: 'P3' },
-    low: { color: 'text-gray-400', label: 'P4' },
-  };
-  const priority = req.priority ? priorityStyles[req.priority] : null;
+  const badge = node.badge!;
+  const badgeConfig = BADGE_CONFIG[badge];
 
   return (
     <button
@@ -172,46 +216,9 @@ function TreeNodeComponent({
     >
       <span className="text-gray-300 w-4 text-center flex-none">•</span>
       <span className="font-mono truncate flex-1 min-w-0">{node.name}</span>
-
-      {/* R F - Gherkin & NFRs */}
-      <span className="flex gap-1 text-xs font-medium flex-none">
-        <span className={hasGherkin ? 'text-green-600' : 'text-gray-300'}>R</span>
-        <span className={hasNfrs ? 'text-green-600' : 'text-gray-300'}>F</span>
-      </span>
-
-      {/* T:N - Tests (with ! if issues) */}
-      <span className={`text-xs flex-none ${hasTestIssues ? 'text-red-500' : hasTests ? 'text-green-600' : 'text-gray-300'}`}>
-        T:{req.testCount}{hasTestIssues ? '!' : ''}
-      </span>
-
-      {/* C - Coverage sufficient */}
-      <span className={`text-xs flex-none ${coverageSufficient === true ? 'text-green-600' : coverageSufficient === false ? 'text-red-500' : 'text-gray-300'}`}>
-        C
-      </span>
-
-      {/* D:X/Y - Deps (always show) */}
-      <span className={`text-xs flex-none ${totalDeps === 0 ? 'text-gray-300' : depsAllPassing ? 'text-green-600' : 'text-yellow-600'}`}>
-        D:{totalDeps === 0 ? '0' : `${passingDeps}/${totalDeps}`}
-      </span>
-
-      {/* P1-P4 - Priority (always show) */}
-      <span className={`text-xs font-medium flex-none ${priority ? priority.color : 'text-gray-300'}`}>
-        {priority ? priority.label : 'P-'}
-      </span>
-
-      {/* done/plan - Status */}
-      <span className={`text-xs flex-none ${isDone ? 'text-blue-600' : 'text-gray-400'}`}>
-        {isDone ? 'done' : 'plan'}
-      </span>
-
-      {/* ✓ or ! - Verified */}
-      <span className={`text-xs flex-none ${isVerified ? 'text-green-600' : needsVerification ? 'text-yellow-500' : 'text-gray-300'}`}>
-        {needsVerification ? '!' : '✓'}
-      </span>
-
-      {/* ? - Questions (always show, green if none/all answered, red if unanswered) */}
-      <span className={`text-xs flex-none ${req.unansweredQuestions > 0 ? 'text-red-500' : 'text-green-600'}`}>
-        {req.unansweredQuestions > 0 ? `?${req.unansweredQuestions}` : '?'}
+      <span className="flex items-center gap-1.5 flex-none">
+        <span className={`w-2 h-2 rounded-full ${badgeConfig.color}`} />
+        <span className="text-xs text-gray-500">{badgeConfig.label}</span>
       </span>
     </button>
   );
