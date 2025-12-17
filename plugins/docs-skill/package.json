@@ -1,0 +1,23 @@
+{
+  "name": "docs-skill",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "docs": "./src/cli.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "glob": "^11.0.0",
+    "minimatch": "^9.0.0",
+    "yaml": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  }
+}

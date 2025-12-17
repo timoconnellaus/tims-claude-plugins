@@ -1,0 +1,21 @@
+gherkin: |-
+  Given a markdown file in docs/
+  When line count is calculated excluding frontmatter
+  Then it must not exceed 1000 lines
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports line limit exceeded
+    hash: 163e62f54a07dad3f799e20a9eb99a926318538cd2b79352aaeffdfc9411b80c
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: does not report at exactly line limit
+    hash: 537251d80038fae461f9213ef8e8bfe345b21ba5a5f96ca4925d9c7562315be6
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: counts content lines correctly
+    hash: e103ec4de527580a15ac731a9f6c2a6bcd105a722c04baba54bdf61f39775723
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: correctly counts lines excluding frontmatter
+    hash: 887079a75bbf6c1cb49928ad1965d8379eb67e86be6eeddb63d0056950fe95a7
+status: done

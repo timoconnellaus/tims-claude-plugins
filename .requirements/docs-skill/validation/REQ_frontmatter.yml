@@ -1,0 +1,115 @@
+gherkin: |-
+  Given a markdown file in docs/
+  When it is validated
+  Then it must have YAML frontmatter with topic
+  And title fields
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: parses valid frontmatter with required fields
+    hash: 83b745ea258ea0fdf0b8d8d84cc7ca88ec2f3c1d5f51193fd2c12bdd3f322ebc
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when topic is missing
+    hash: c06c09a4ce52966db996dfaa1a062af198b8f2d25ba5d17bc2678d5a3472ad25
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when title is missing
+    hash: 4e17d935a30235fa361db0cba7ff3a352bbf3335938c39baac6f276648914d57
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: returns no errors for valid doc
+    hash: 9adcb0d34497c9101580a4161fce7e07f58e5ee204fa2defe8b40ff99c102a78
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports missing topic
+    hash: ffd67a36e716a5073053ede16c605e4da68085b0639069b5b58b9cf9977646fd
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports missing title
+    hash: 9ad637e06a8dc0f7dc3ba718080a9d59a54b664a93096ede3c8ca571fdbfb1b1
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: parses frontmatter with all optional fields
+    hash: eabf3de22e233299c98e8d66a1d4173aa3e953f1f88aa91b0965e807af3cd4cf
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when closing delimiter is missing
+    hash: b6f42bc8735cf948a5083b3c762109066a3b1ed52e335669ef66d66d417d84e2
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails on invalid topic format
+    hash: f240bf352f57badcf3cd71918e6e14dd8f486aa69f82b55278429169727d1dcc
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails on invalid YAML
+    hash: 3c8ebcb972ce9a8a529c8bd1936cb850b79082e294b6bce34eebc64822894f11
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when tags is not an array
+    hash: 5b831ff95ada1eaa70d6921524516a04d8a950766bbd4c1ebdd4b201b42dbc99
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when tags contains non-strings
+    hash: cd20e45b171e71c32bacb9baa3756e538a13ab1abbcc4863baf3b65e7419debb
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: handles empty content
+    hash: 18572ff75adc38f254f192b06c2c3f9cd2aa8ddf499f22b56d92be88979a4bcf
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: generates frontmatter with required fields
+    hash: cbae58fcb18db57acbe3f891725246530363dbb7d9f10574aabd2757baa2fdb8
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: generates frontmatter with all fields
+    hash: 3a96d325197c367f9bbd3af99c0255a1735fe3be803bce93e8b5ec52323642a4
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: escapes quotes in title
+    hash: cdb65a75a41866e1775e4dba8b91e3ce8c86f0b4d98dd06df80f002272cc2956
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: returns ParsedDoc for valid file
+    hash: 3482a4fd2ac3984cbbb0bb561ff7a23035ed44c25d03e82507171160527567dc
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: returns null for invalid file
+    hash: dd4b88ec9e9592151a96be8c6ab6c6fa5467dcf33581a3ed346661449a291da2
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports invalid topic format
+    hash: 1f225e61e95efdfc56e201fde0c714899017fa2690ac552a7c3f37ed612642c6
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: includes path in all errors
+    hash: 515c1be21abfb199624336c770a74bc4fc2f865e2c8679423d75a07320b5a806
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: can report multiple errors at once
+    hash: c2dc05a1eec0843c89734ddf2649769ba9ccae2c491b3f97af3a02f9cf7522f0
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: returns no errors for valid markdown
+    hash: 3927d2e72db8f3873a679b97a1042d0987671b259c44e3880b4a9f7e6e4776ff
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports missing frontmatter
+    hash: ec267a39a9b8b27ebaa81d59e2d6de36d2e984093ee01df9732c3d6aa2b71f45
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports unclosed frontmatter
+    hash: b27d44d5d291ea5f103d6e286fff9774c4260ea5acc5dc1368e887167540c065
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: reports invalid YAML
+    hash: 812214ca639f6ac029f5acd4f5e3b2d90d4573b007328f1a00166887104afa20
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: validates content after parsing frontmatter
+    hash: 540ca982707738b63b37a61f65c1ba07af6f7f020ea7c2c19c6ee761e96ee152
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: returns message for no errors
+    hash: 9a9e97bc9ceeee1dc717a556c2df1ec53a1a19c367f3f328f16273b110804b4d
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: formats single error
+    hash: 1586863dd722a727453d16ea294c7a968a36e8ae1a4777d8b0a8a54fcca3fd2b
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: formats multiple errors
+    hash: 53619605cbdf472e87d48066064f7d9c612c7a071dbc33e462baedcfe55fc96f
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: includes line number when present
+    hash: 36946e918156a658cf3cdcb25b98b525cdfb6b34086e5e023edbbf189ca909ab
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: formats valid result
+    hash: fe2c1845ce5d6523c19f57057618f9fd9e43db9ba7da6dc50648587f406fd4ac
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: formats invalid result with errors
+    hash: f49a58d00973b4a4b8b4ecf11e256339a2922380f1ecea3d92481b48a6bb8ae1
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: formats result with multiple errors
+    hash: 4fd7455818dec6a89938d4c536c8015ae2588f5b5b9e3d34f89da89c0610a42b
+  - file: plugins/docs-skill/src/__tests__/validator.test.ts
+    identifier: includes line numbers in error output
+    hash: a277154b6eaddbb1ae22decd503c7621de9f13858e3cf4bc47fb9509a6c649bf
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: fails when frontmatter delimiter is missing at start
+    hash: 585ef75f0f5f42f12bbbca54835a5b655317badb532ef54bdb35d05801dfae8d
+status: done

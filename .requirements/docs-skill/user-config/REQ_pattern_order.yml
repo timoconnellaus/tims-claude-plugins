@@ -1,0 +1,15 @@
+gherkin: |-
+  Given multiple topic patterns in config
+  When they are evaluated
+  Then later patterns override earlier patterns
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: later patterns override earlier ones
+    hash: 6f70178a1f363760bcab7344dff71b395bae9c156fe324cebd04acd3caa92a74
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: handles multiple exclusions correctly
+    hash: fdb44c3b1da8e695093c0d62a14e46918c199c74e2f7ead2026d7b6cb10260ef
+status: done

@@ -1,0 +1,51 @@
+gherkin: |-
+  Given a user wants to use docs in their project
+  When they run docs init
+  Then a .docs folder is created with config.yml
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: creates .docs directory
+    hash: 0a31b16eb9ddc0901151a49d3650d4c1dca399ece079c6fddf04ef123ed18eae
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: saves and loads config
+    hash: 2f52a95bbe5af3b19fc8b67c7a27f55b124f622a685fa7d0b661092223be011b
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns config with version 1
+    hash: 2704246c60967607d0d7e9e8e6c1a38458fc8513cbc7d6e2f95499d73e4c4501
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns path to .docs directory
+    hash: e55047d1e85019ed261662380c51fb73624165bd1db3696bed41528007d74ce4
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns path to config.yml
+    hash: c4bee41964353bedf2b08980f79414ae1e531803171fdc08dfb77ad0a4c6db44
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns false when .docs does not exist
+    hash: de73fab9c61ebbf94272b3c7be343de22757b26a4af9c182d72d93196fa99ec2
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns true when .docs exists
+    hash: eda2601406a495aca28748345c5d8f9700fa3efd2fc02f9297c5561123c6d081
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: does not error if directory already exists
+    hash: a4a51042528305208c7f4a129a6d1ef7d7eb3cb4000f80a81e16325cc9f5df4b
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns config with empty topics array
+    hash: 942d9b37833ad6b2e9f142cbc511a35580de0d309ff76fa6578d3b00f1d6321a
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: does not include lastSync by default
+    hash: ea615d99c512103bae5e68f75b8cddedcdaec9fdc2c95333a474bdf8e6a33b6e
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: creates .docs directory when saving
+    hash: 2d76228c7a2c1293830ba75933599e7a41f5d862bcb26aa1d4f0074e7dc6c6c1
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns null when config does not exist
+    hash: d045ca1ee933484dd2f73bcc2adda5e47439fd9ca5334a61f029402e1c0654a6
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: ensures topics is an array when loading
+    hash: 70fb893ff00063049e074a9f044fcc4a8d71f6fba786b9156f9514e4ba3af4fa
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: throws on unsupported config version
+    hash: f6a0f9c0914a334fe06a54ac3de2e11bb17fa0315e5b4dbdd402195a22e74802
+status: done

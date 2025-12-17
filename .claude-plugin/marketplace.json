@@ -16,6 +16,15 @@
       "skills": [
         "./skills/requirements-tracker"
       ]
+    },
+    {
+      "name": "docs-skill",
+      "description": "Manage AI-ready documentation for projects with topic patterns and syncing",
+      "source": "./plugins/docs-skill",
+      "strict": false,
+      "skills": [
+        "./skills/docs"
+      ]
     }
   ]
 }

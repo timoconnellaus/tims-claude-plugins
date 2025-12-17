@@ -1,0 +1,12 @@
+gherkin: >-
+  Given a sync-docs.ts file
+
+  When sync() generates docs
+
+  Then all content must be fetched from external sources with no hardcoded
+  content
+source:
+  type: manual
+  description: Initial design
+tests: []
+status: planned

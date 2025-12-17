@@ -1,0 +1,117 @@
+gherkin: |-
+  Given a large markdown file
+  When it needs to be split
+  Then the shared library can split it by headings into separate documents
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: splits content at h2 headings by default
+    hash: ca78e4e40522621034c15ab0a454d0d636532c7eba19cc12e95954c2c898b297
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: respects maxLevel option
+    hash: d79d6a445be0ddb552111e9aa23624d7e19a0203209a07a6d65031aad38da449
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: splits large section into parts
+    hash: fef6861c1c5de0b907cde5fbcddffe85c830047c08373b8ce7e257ebe143e000
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: merges small consecutive sections
+    hash: 106ece3a4cb26cc56f9cbbf3ed9c51b16f34e52111d7cd190a3271515b2afce4
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: captures heading level correctly
+    hash: 0ba076283b5fe3924d8961e765f7b87783cb153b77e785a4692d15bb745e4344
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: tracks line numbers
+    hash: 6fc5fbe328d3a37d1d4ae0c06ca06cbaf0f871ef825fd68272022ddb670081ed
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles content with no headings
+    hash: 08f54d6e7a0683bfe12882c4dba1135249c0699939e13d4f8d760b8af778259d
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles empty content
+    hash: cd9f350c49d3554ecc2f5069959be9aac3587d22819d5ffe1a81b1d340502049
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles content with only headings
+    hash: e38abe74a6037158c5fec1b18165eb814acd09c924388f825f40dabe34a4082a
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: does not split on h3+ when maxLevel is 2
+    hash: 17d1e82804af8b628dac6eef7ce8a4268ff987b5ffe43ba362093324a7aa83a2
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles headings with special characters
+    hash: 38b547bcfb2ddfe5ca8315f68d9e8e35cd1c61fd8f21f9d9d4dc4c9c277b86b7
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: does not merge sections that exceed minLines
+    hash: 7af5dff426fd49e09ec009b6f39deed5bfa14f65caba1af7c206c10aa403a666
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles empty sections array
+    hash: 3894bd63afa68e47b88f82285ec13c9b2d7365992526a07409161ca5c179292b
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: preserves end line from merged sections
+    hash: 3531022f7ce3989a17e1f4d02d8ea23bbb2cbc83d7f239804f58048abba520a3
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: returns unchanged if under limit
+    hash: 52c66562288629fe51c31903d1a7cef63e2f9b1e7afd0aa085c9192b2831ea7d
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: preserves level in split parts
+    hash: 6e5b7bc6fc7f7766c11aa6de2bcaf5f895742103d0a982b857a3f437d8d561d5
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: extracts text from h1
+    hash: 2d9b04a2113ea3f07f4ffb56b683a06fe62a5c40a5a6ea5d39bdb078b892c2cd
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: extracts text from h2
+    hash: b0b5691f5e920203aff8bd55e7c9edbc7e7919916224f2698ea11f8952251372
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: extracts text from h6
+    hash: d52139de0b57caa92c99e609a522dcec27fcffdce9e2ec5ba27aefba56ddf463
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles extra spaces
+    hash: c6805e9b6693cf376827379f4a6b9904e445ae0e43940fb3451fbf0f27045afa
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: returns trimmed input for non-heading
+    hash: 988dde1f96cdefd978176006621b663d0d2b17f974982dfa8bbafd66ed0254ee
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles empty heading text
+    hash: acb4d9d9c778a8722d6551d26830f34497a9db537791f759c09ab7393afeebc2
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: converts to lowercase
+    hash: 4365596e6c7fc2105f1443f83a4b8f4f0ef77a3577f8e90a1240f56fb6cb3c5e
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: replaces spaces with hyphens
+    hash: ca17beaddaebd118d8c55a9aef8c9982550941099f7bf7a1c1f178f6fc6afd7b
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: removes special characters
+    hash: a334fa3a6e328bca1d1d03ddef8277b240fd11e2c1abcc5ec4c5686ed536c0a3
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: handles numbers
+    hash: 266a1c52e408288fbb485283b4b3200d1737a2347a380c683b745e1b71dc9f34
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: collapses multiple hyphens
+    hash: 12bc20efa654235c640d0b52bc9b2dba0749e5aff31e7af1c842e3c295786c2f
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: removes leading and trailing hyphens
+    hash: 23077deb6723e5e6dedf18904217d6f69b00fbfac42f092b71f8dc19ff503b34
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: builds TOC from sections
+    hash: 1d8de1e87aa8fc01e48bbc2d77d681afea46319551f649e347d3258ab4d25b05
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: indents based on heading level
+    hash: 5252dc95538566dbba1ffbc01ff27f6c4aed8bf148ef99558f645dcde507f460
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: skips sections without headings
+    hash: 172bd368b7ced4c8a7f8cbf5328c138df3cb81335f29d757f3e72cd3790cfbc8
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: counts lines in content
+    hash: b1ba731bdeab2d4bc63bee41339010633a6dc72e208c4d5a5dd599feb802a70c
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: returns 0 for empty content
+    hash: b392a7290c752200c33158962d898d0656a227a936ba9ce43986b68c0a56e936
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: returns 0 for whitespace-only content
+    hash: 3e8f3e0e2a138fdec4328f4805126aafa596bf18e90d0599a6c92f19da52a81c
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: trims content before counting
+    hash: 5243106d2d9abbe15af62fbdb556a887fcafdf04254ec5787e0d3e35e6b8e5b7
+  - file: plugins/docs-skill/src/__tests__/markdown-splitter.test.ts
+    identifier: counts single line correctly
+    hash: 5fdedea18719e154956a84ba4b578d7ad5f78c42fd37987ae0c84d2b696d6496
+status: done

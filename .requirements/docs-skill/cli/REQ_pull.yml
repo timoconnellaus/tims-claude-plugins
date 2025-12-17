@@ -1,0 +1,30 @@
+gherkin: |-
+  Given a configured .docs folder
+  When the user runs docs pull
+  Then only docs matching their topic patterns are synced
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: writes doc file with frontmatter
+    hash: 0da9d43b5b26f3cc2a63fa0aae1a739d4728489ae850df5f14f269ddabb17ce6
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: loads docs from .docs directory
+    hash: 3b8781bd8c1c285cb272584e05ff2d64324c75c567ad63cd94a2237112760ff1
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: respects exclusion patterns
+    hash: b34211a411537ce7896d189ef3f0a56388a4e911fef2c60b81df2a4ed1aaf01f
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: creates nested directories
+    hash: bd221f61620f0475e5f013e0343f1307311cfaf08ebc8cfd1d937de7edc9454e
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: returns empty array when no docs exist
+    hash: 986ffd754fbfd103ce5d96fadd76b1105c7ea4c3a9ff406971ac815504badc66
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: loads multiple docs from nested directories
+    hash: 9608d4b25c499091ac4bffcbe147179305339c90a09d033812fdc070cf1721fc
+  - file: plugins/docs-skill/src/__tests__/store.test.ts
+    identifier: skips invalid markdown files
+    hash: c88915792c965b03a3666e91a6f2c74997ed03f0af0807c80cd158a92458588f
+status: done

@@ -1,0 +1,47 @@
+gherkin: |-
+  Given a topic string
+  When it is validated
+  Then it must be lowercase with forward slash separators
+  And only contain alphanumeric characters
+  And hyphens
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: accepts valid simple topic
+    hash: 0c44965bfc3a62726848b230a8d94476a0b1e428a06a267fed6ca7a236b3ceee
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: accepts valid nested topic
+    hash: 089beedab6421d57aa694413fe17a9e2c8e1ae0efa21fccee098ad15e1dd14c3
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: accepts valid deeply nested topic
+    hash: 465c75668aa892ece7a6eee0c774d8604bb2c6dfa99af515ee01e84e77416b9f
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: accepts topic with numbers
+    hash: 73069521da3c362b1c4c8daf35e2d1c9dd88d6742c411762d637a659165f365b
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: accepts topic with hyphens
+    hash: f0c766c9b9539f5935ad8c921665a9caf9fc3054a7a6207a47c1c27297117396
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects uppercase letters
+    hash: 2e56955fe248ce9e7b9840c1027a09ad59f186d9b45b408c081678b248e31fd2
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects leading slash
+    hash: 0bfd2217c83268edcaea2845f604ec2a7ba8761620c1421734429a92fb6b0df0
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects trailing slash
+    hash: ee9a36164edb1f223618950bf2299665b6c506685158e3db45ba0c0f34d8d09f
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects consecutive slashes
+    hash: 64b5f9c05c369296d38370a6d2ef81813974af9aa2a496c3824311f55f443ef8
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects spaces
+    hash: d1f9f63a78c830c01a79718c5363fe01b07e71a66898c51651b011c0a2662602
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects special characters
+    hash: 347b0db38d029f1098350c6a57fb05de82630b231a59d4a5e8724946905157dc
+  - file: plugins/docs-skill/src/__tests__/frontmatter.test.ts
+    identifier: rejects empty string
+    hash: 31df666cf3422b507ed151d33f2b5c2982238b0677cbfd7b1fbf6505a4fe2ad8
+status: done

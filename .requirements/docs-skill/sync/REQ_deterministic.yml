@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a sync-docs.ts file
+  When sync() is called multiple times
+  Then it produces identical output each time
+source:
+  type: manual
+  description: Initial design
+tests: []
+status: planned

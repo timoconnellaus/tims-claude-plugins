@@ -1,0 +1,126 @@
+gherkin: >-
+  Given a user config with topic patterns
+
+  When patterns are evaluated
+
+  Then gitignore-style glob patterns with negation via exclamation prefix are
+  supported
+source:
+  type: manual
+  description: Initial design
+tests:
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches exact topic
+    hash: 2b53243f4e597db7e26a1614069cfd8897033252b5ef9103beda9b3a5962528f
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches direct children
+    hash: 5b40061362555c79312b5192702c5a9bbd8862669a539015197188ee4bfcf7fc
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches all nested paths
+    hash: 786137c5c330ace044aab5020b5d7d3688ee04c2297905eff1da24c2de1f0479
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: "returns included: false when negation pattern matches"
+    hash: 2b629937dba86cd44bd812f234c6f1560af187427c488b9e35969ee603d1ed4f
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns true for patterns starting with !
+    hash: 31e35256ed0cd6c5f994f6dad000e90450999a2b676e9fb986dc475173e11b69
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns only included topics
+    hash: a5f0a623e525e07b7afdd1f88508813c8eb4ac2bbe6acef0afb1783a4b295c2b
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns false for regular patterns
+    hash: 8deced278682e8e93a15a0b0cee6b94c18dc824a05861328f5eb6350d72ca772
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns false for patterns with ! elsewhere
+    hash: 85550dc003847ca96d1be07705d07bf4658fb08249a795360e8f00d14de74ebc
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: removes ! prefix from negation patterns
+    hash: b04a12f4d37b4cdd3dd2b6798b2adb0b7d830a1ff3acc228de2208536cc46c1a
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns pattern unchanged if not negation
+    hash: c6c379ff6966e112e71e9f07e94516b41b5368811bfd41ba50c5b2201dab16fa
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: does not match different topic
+    hash: df30af9893c2db80e64a77c78b4eec0fd3398609c70ab809d14663b343296e35
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches topic that starts with pattern followed by /
+    hash: 3d6594e343a4ea969326a6eaac0d5800a2844711ea1ffe76fee478e89e79b1f7
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: does not match nested paths
+    hash: 428155cd75d791c8674eb4244a0b2f240e5ee5fee042e2b6d53440bd68b64627
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches any direct child
+    hash: 73e0e10304e99bc89abdf0e3f8543d04a425ff334a7211a418f06151bb8c7b71
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches direct children too
+    hash: 32ad24afdc5adf6ee3c1626735adb85d636f498f4615e9b9064e347de10c99b5
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: does not match different prefix
+    hash: 1dd6cf7e5e53bef0e5baf5ecba758eccaa021d24f6bda65b07148f1e141806ba
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches pattern with wildcard in middle
+    hash: 16db2821d9fbad82f5edfd387e7a497978dd467f93fdc2bd1b97627fef65687f
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches pattern ending with wildcard
+    hash: adfbbbf24aef23c1b830d0a1467ea44b3b73146bddf1c9522ece32325cd1b286
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: "returns included: false when no patterns match"
+    hash: 4c367ed66207d7844d076d7ef879b73f1387f7d9660e319200009b000398e5b8
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: "returns included: true when pattern matches"
+    hash: 311186dfb336470b79b363fc22546c687954553e48f5295078bfa7b5be01015b
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: matches multiple topics against patterns
+    hash: 23b9aaba8390e617baad1cf519930ab39b4a32e5f6c560fa09537ca150a9ac79
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns empty array when nothing matches
+    hash: de557e82e9bf17fdf95084a187b52d20d9febfda5fdf5dfdaec37050f3fed9e0
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: returns only excluded topics
+    hash: f9303ccf18974c98edcd177f99271024ff22be4be4ba4788e35482a229ed320b
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: accepts valid patterns
+    hash: 3008f9b1fb1e9ef90c15a685c3b57245d8af527fb88d3e0e6dd90177f1393d57
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: rejects empty pattern
+    hash: 89e384c7fadf04dbf6a00981b476c5748673768a786396a6b714e01ea7c69050
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: rejects patterns with invalid characters
+    hash: 11bdb5daf4a4d149e2d37e4f7d28110455da416ed2add87bf4878b0bbaa5095e
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: rejects patterns starting or ending with /
+    hash: eae8c7d3da11deffd8cf4bd9b71860b88f202eef49166914fef9e4c014673bae
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: rejects patterns with ***
+    hash: 944f582a90a271193b0ee69cb091e399875b33ff8a2862f27d8d212d6d856635
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: groups topics by their first segment
+    hash: aea80a2a72888a0e37c49396b863db48413f03c1c88bcb19694f901ef760111b
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: handles single topic per source
+    hash: 53e45a9138d7a4fa4650c764e000af88779f3480b117cd03c5882ba55b6d4332
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: extracts first segment as source
+    hash: 3f6c672802556415952b484a148d1cb60156feac9cccbd6dbf94340f21ea4da7
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: formats empty patterns list
+    hash: 3996ddae8765cb98ee00b7b8fa91f0f74b5d6f36eb0f5e690b257c237af560f0
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: formats inclusion patterns
+    hash: 1c005b0a208fec1658d3a60ca8c189143741ef563a96d50a9167110e2eb2e868
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: formats exclusion patterns
+    hash: 02724fb03e71212735b4e33e88a06cb0b7a253a6eed804946253b77cd810c6c9
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: formats mixed patterns
+    hash: 5dbf5b051199179a8bbcc26eb41b7352f99555c0fe1bd2d51221263c3940618e
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: explains included match
+    hash: 7f75c9d039fdcf716af06d2a3ba4f6270930a8056dfd6059a52adefe27d92c1b
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: explains excluded match
+    hash: d2e793e2d9aa669bcdd58a74862f2758cea074213ffab9b2243e752897a8e282
+  - file: plugins/docs-skill/src/__tests__/topic-matcher.test.ts
+    identifier: explains no match
+    hash: 9fd56b33960a4a01f4d92ef2a12edec093a43ada8f5dd5bd51b79111d96ae403
+status: done
