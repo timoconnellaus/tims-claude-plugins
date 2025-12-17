@@ -10,6 +10,7 @@ import {
   saveRequirement,
 } from "../lib/store";
 import { getTestsWithCache } from "../lib/cache";
+import { isValidGherkinFormat } from "../lib/gherkin";
 import type {
   CheckResult,
   VerificationStatus,
@@ -19,6 +20,7 @@ import type {
   Priority,
   DependencyIssue,
   PriorityBreakdown,
+  GherkinFormatIssue,
 } from "../lib/types";
 
 /**
@@ -90,6 +92,7 @@ export async function check(args: {
           requirements: [],
           orphanedTests: [],
           dependencyIssues: [],
+          gherkinIssues: [],
           summary: {
             totalRequirements: 0,
             planned: 0,
@@ -104,6 +107,7 @@ export async function check(args: {
             byPriority: { critical: 0, high: 0, medium: 0, low: 0, unset: 0 },
             blockedRequirements: 0,
             unverifiedNFRs: 0,
+            gherkinFormatIssues: 0,
           },
         })
       );
@@ -169,6 +173,7 @@ export async function check(args: {
     requirements: [],
     orphanedTests: [],
     dependencyIssues: [],
+    gherkinIssues: [],
     summary: {
       totalRequirements: 0,
       planned: 0,
@@ -189,6 +194,7 @@ export async function check(args: {
       },
       blockedRequirements: 0,
       unverifiedNFRs: 0,
+      gherkinFormatIssues: 0,
     },
   };
 
@@ -306,6 +312,30 @@ export async function check(args: {
       const nfrs = req.data.nfrs || [];
       const unverifiedNFRCount = nfrs.filter((nfr) => !nfr.verified).length;
       result.summary.unverifiedNFRs += unverifiedNFRCount;
+
+      // Validate gherkin format
+      const gherkinValidation = isValidGherkinFormat(req.data.gherkin);
+      if (!gherkinValidation.valid) {
+        result.gherkinIssues.push({
+          requirement: req.path,
+          errors: gherkinValidation.errors,
+        });
+        result.summary.gherkinFormatIssues++;
+      }
+
+      // Also validate scenarios if present
+      if (req.data.scenarios) {
+        for (const scenario of req.data.scenarios) {
+          const scenarioValidation = isValidGherkinFormat(scenario.gherkin);
+          if (!scenarioValidation.valid) {
+            result.gherkinIssues.push({
+              requirement: `${req.path} (scenario: ${scenario.name})`,
+              errors: scenarioValidation.errors,
+            });
+            result.summary.gherkinFormatIssues++;
+          }
+        }
+      }
 
       // Use path as ID (e.g., "auth/REQ_login.yml")
       groupResult.requirements.push({
@@ -461,6 +491,17 @@ export async function check(args: {
     );
     for (const req of withUnverifiedNFRs) {
       console.log(`  - ${req.id}: ${req.count} unverified NFR(s)`);
+    }
+  }
+
+  // Show gherkin format issues
+  if (result.gherkinIssues.length > 0) {
+    console.log("\nGherkin format issues:");
+    for (const issue of result.gherkinIssues) {
+      console.log(`  - ${issue.requirement}:`);
+      for (const err of issue.errors) {
+        console.log(`      ${err}`);
+      }
     }
   }
 

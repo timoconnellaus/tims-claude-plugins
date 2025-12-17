@@ -1,10 +1,11 @@
 status: done
 gherkin: |-
-  Given a todo store with completed and active todos
-  When a user clears all completed todos
-  Then all completed todos are removed
-  And all active todos remain unchanged
-  And the count of deleted todos is returned
+  Scenario: Clear completed todos
+    Given a todo store with completed and active todos
+    When a user clears all completed todos
+    Then all completed todos are removed
+    And all active todos remain unchanged
+    And the count of deleted todos is returned
 source:
   type: manual
   description: Bulk operations - derived from existing implementation

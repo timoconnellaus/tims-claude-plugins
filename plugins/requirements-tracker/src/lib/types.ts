@@ -200,6 +200,12 @@ export interface DependencyIssue {
   blockedBy: string[]; // Paths of blocking dependencies that are not "done"
 }
 
+// Gherkin format issue detected during check
+export interface GherkinFormatIssue {
+  requirement: string; // Path of requirement (or path + scenario name)
+  errors: string[]; // List of format errors
+}
+
 // Check command output structures
 export interface RequirementCheckResult {
   id: string;
@@ -247,12 +253,14 @@ export interface CheckSummary {
   byPriority: PriorityBreakdown; // Priority breakdown (all requirements)
   blockedRequirements: number; // Requirements with unmet blocking dependencies
   unverifiedNFRs: number; // Total NFRs without verified=true
+  gherkinFormatIssues: number; // Requirements with malformed gherkin
 }
 
 export interface CheckResult {
   requirements: RequirementGroupCheckResult[];
   orphanedTests: ExtractedTest[];
   dependencyIssues: DependencyIssue[]; // Requirements blocked by unmet dependencies
+  gherkinIssues: GherkinFormatIssue[]; // Requirements with gherkin format issues
   summary: CheckSummary;
 }
 

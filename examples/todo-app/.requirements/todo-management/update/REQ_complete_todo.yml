@@ -4,10 +4,7 @@ gherkin: |-
   When a user marks the todo as complete
   Then the todo is marked as completed
   And a completion timestamp is recorded
-
-  Given a todo that is already completed
-  When a user marks it as complete again
-  Then the operation is idempotent (no error)
+  And completing an already completed todo is idempotent
 source:
   type: manual
   description: Core todo-app functionality - derived from existing implementation

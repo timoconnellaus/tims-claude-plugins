@@ -132,6 +132,7 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
     requirements: [],
     orphanedTests: [],
     dependencyIssues: [],
+    gherkinIssues: [],
     summary: {
       totalRequirements: 0,
       planned: 0,
@@ -152,6 +153,7 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
       },
       blockedRequirements: 0,
       unverifiedNFRs: 0,
+      gherkinFormatIssues: 0,
     },
   };
 

@@ -83,6 +83,12 @@ export async function link(args: {
   // Add to requirement
   requirement.data.tests.push(newLink);
 
+  // Auto-set status to done when tests are linked
+  if (requirement.data.status === "planned") {
+    requirement.data.status = "done";
+    console.log("Status changed from 'planned' to 'done' (tests linked)");
+  }
+
   // Clear AI assessment since test coverage changed
   delete requirement.data.aiAssessment;
 

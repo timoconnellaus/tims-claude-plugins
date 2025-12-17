@@ -544,3 +544,8 @@ const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(<App />);
 }
+
+// Accept hot module updates
+if (import.meta.hot) {
+  import.meta.hot.accept();
+}

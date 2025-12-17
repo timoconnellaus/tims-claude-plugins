@@ -1,13 +1,15 @@
 status: done
 gherkin: |-
-  Given a todo store with a completed todo
-  When a user marks the todo as incomplete
-  Then the todo is marked as not completed
-  And the completion timestamp is cleared
+  Scenario: Uncomplete a todo
+    Given a todo store with a completed todo
+    When a user marks the todo as incomplete
+    Then the todo is marked as not completed
+    And the completion timestamp is cleared
 
-  Given a todo that is already incomplete
-  When a user marks it as incomplete again
-  Then the operation is idempotent (no error)
+  Scenario: Uncomplete already incomplete todo
+    Given a todo that is already incomplete
+    When a user marks it as incomplete again
+    Then the operation is idempotent (no error)
 source:
   type: manual
   description: Core todo-app functionality - derived from existing implementation

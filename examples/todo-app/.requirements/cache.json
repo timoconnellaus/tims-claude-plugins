@@ -1,10 +1,12 @@
 {
   "version": 1,
-  "generatedAt": "2025-12-17T01:16:33.975Z",
+  "generatedAt": "2025-12-17T02:30:10.358Z",
   "fileMtimes": {
-    "tests/todo.test.ts": 1765934179557
+    "tests/architecture.test.ts": 1765938517134,
+    "tests/todo.test.ts": 1765935679241
   },
   "tests": {
+    "tests/architecture.test.ts:uses Bun monorepo with workspaces": "ce64b364bdb29e5fec5fa080f4cd6f551d1194c64a189ccde13cd88fe5b81bd8",
     "tests/todo.test.ts:addTodo creates a new todo": "5110199830b4066c9bd8871b295144f5c2740500dc8394a01ba791299525265b",
     "tests/todo.test.ts:addTodo trims whitespace from title": "61a927f9f4b6cc9878783df8dc9c592fb11eefd724a8103f42e93a7f6fb06ef9",
     "tests/todo.test.ts:addTodo creates unique IDs for multiple todos": "6ac98179dc0c6a10f6ef9f217b87c84f7ead7e1a39845c2bdbd0cc63bf18e0db",

@@ -1,16 +1,19 @@
 status: done
 gherkin: |-
-  Given a todo store with mixed completed and active todos
-  When a user requests active todos only
-  Then only incomplete todos are returned
+  Scenario: Filter active todos
+    Given a todo store with mixed completed and active todos
+    When a user requests active todos only
+    Then only incomplete todos are returned
 
-  Given a todo store with mixed completed and active todos
-  When a user requests completed todos only
-  Then only completed todos are returned
+  Scenario: Filter completed todos
+    Given a todo store with mixed completed and active todos
+    When a user requests completed todos only
+    Then only completed todos are returned
 
-  Given a todo store
-  When a user requests all todos
-  Then all todos are returned regardless of status
+  Scenario: List all todos
+    Given a todo store
+    When a user requests all todos
+    Then all todos are returned regardless of status
 source:
   type: manual
   description: Filtering functionality - derived from existing implementation

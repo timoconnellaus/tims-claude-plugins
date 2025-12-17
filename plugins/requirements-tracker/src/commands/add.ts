@@ -8,6 +8,7 @@ import {
   saveRequirement,
   isValidRequirementPath,
 } from "../lib/store";
+import { parseAndFormat } from "../lib/gherkin";
 import type { Requirement, SourceType, Priority } from "../lib/types";
 
 const VALID_SOURCE_TYPES: SourceType[] = [
@@ -62,21 +63,19 @@ export async function add(args: AddArgs): Promise<void> {
     process.exit(1);
   }
 
-  // Validate gherkin format
-  const gherkinLower = gherkin.toLowerCase();
-  if (
-    !gherkinLower.includes("given") ||
-    !gherkinLower.includes("when") ||
-    !gherkinLower.includes("then")
-  ) {
-    console.error(
-      "Invalid gherkin format. Must include 'Given', 'When', and 'Then' keywords."
-    );
-    console.error(
-      "Example: Given a user is logged in When they click logout Then they are redirected to login page"
-    );
+  // Parse and auto-format gherkin
+  const formatResult = parseAndFormat(gherkin);
+  if ("error" in formatResult) {
+    console.error(`Invalid gherkin format: ${formatResult.error}`);
+    console.error("");
+    console.error("Expected format (one keyword per line):");
+    console.error("  Given a user is logged in");
+    console.error("  And they have items in cart");
+    console.error("  When they click checkout");
+    console.error("  Then the payment page opens");
     process.exit(1);
   }
+  const formattedGherkin = formatResult.formatted;
 
   // Validate source type
   if (!VALID_SOURCE_TYPES.includes(sourceType as SourceType)) {
@@ -106,7 +105,7 @@ export async function add(args: AddArgs): Promise<void> {
 
   // Create requirement
   const requirement: Requirement = {
-    gherkin,
+    gherkin: formattedGherkin,
     source: {
       type: sourceType as SourceType,
       description: sourceDesc,

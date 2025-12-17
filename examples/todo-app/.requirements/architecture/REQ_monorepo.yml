@@ -1,0 +1,47 @@
+gherkin: |-
+  Scenario: Monorepo structure
+  Given the project structure
+  When organizing code
+  Then all packages should be in a Bun monorepo
+  And shared tooling is used
+  And consistent versioning is maintained
+source:
+  type: manual
+  description: Architecture decision
+tests:
+  - file: tests/architecture.test.ts
+    identifier: uses Bun monorepo with workspaces
+    hash: ce64b364bdb29e5fec5fa080f4cd6f551d1194c64a189ccde13cd88fe5b81bd8
+status: done
+priority: medium
+aiAssessment:
+  sufficient: true
+  notes: Test verifies Bun monorepo by checking for root package.json with
+    workspaces array. Currently failing as expected since monorepo not yet
+    configured.
+  assessedAt: 2025-12-17T02:30:10.358Z
+  criteria:
+    noBugsInTestCode:
+      result: pass
+      note: Test code is straightforward with no bugs
+    sufficientCoverage:
+      result: pass
+      note: Covers the core requirement of checking for Bun workspaces configuration
+    meaningfulAssertions:
+      result: pass
+      note: Asserts package.json exists, has workspaces array with entries
+    correctTestSubject:
+      result: pass
+      note: Tests the monorepo structure requirement directly
+    happyPathCovered:
+      result: pass
+      note: Verifies workspaces field exists and is properly configured
+    edgeCasesAddressed:
+      result: na
+      note: Architecture test - edge cases not applicable
+    errorScenariosHandled:
+      result: na
+      note: Binary pass/fail test - either configured or not
+    wouldFailIfBroke:
+      result: pass
+      note: Would fail if root package.json or workspaces removed

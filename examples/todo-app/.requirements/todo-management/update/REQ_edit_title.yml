@@ -3,15 +3,8 @@ gherkin: |-
   Given a todo store with an existing todo
   When a user updates the todo title
   Then the todo title is changed to the new value (trimmed)
-
-  Given a todo store with an existing todo
-  When a user tries to update the title to empty
-  Then an error is thrown
-  And the original title is preserved
-
-  Given a todo store
-  When a user tries to update a non-existent todo
-  Then an error is thrown
+  But updating to an empty title throws an error and preserves the original
+  And updating a non-existent todo throws an error
 source:
   type: manual
   description: Core todo-app functionality - derived from existing implementation
