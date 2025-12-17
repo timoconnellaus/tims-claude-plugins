@@ -13,6 +13,16 @@ This repository contains Claude Code plugins. Each plugin is a self-contained pa
 bun run typecheck
 ```
 
+## Versioning
+
+When bumping plugin versions, update **all three** of these files:
+
+1. `plugins/<plugin-name>/.claude-plugin/plugin.json` - Plugin manifest version
+2. `plugins/<plugin-name>/package.json` - NPM package version
+3. `.claude-plugin/marketplace.json` - Marketplace listing version
+
+All three must be kept in sync.
+
 ## Architecture
 
 ### Plugin Structure
@@ -20,11 +30,12 @@ bun run typecheck
 Each plugin follows this structure:
 ```
 plugins/<plugin-name>/
-├── plugin.json          # Plugin manifest (name, version, commands, skills)
-├── package.json         # Dependencies
+├── .claude-plugin/
+│   └── plugin.json      # Plugin manifest (name, version, description, author)
+├── package.json         # NPM dependencies
 ├── tsconfig.json        # TypeScript config
-├── commands/            # Slash command definitions (.md files)
-├── skills/              # Skill definitions (.md files)
+├── commands/            # Slash command definitions (.md files) - auto-discovered
+├── skills/              # Skill definitions (.md files) - auto-discovered
 └── src/
     ├── cli.ts           # CLI entrypoint
     ├── commands/        # Command implementations

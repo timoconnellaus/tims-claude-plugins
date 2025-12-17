@@ -1,8 +1,7 @@
 {
   "name": "tims-claude-skills",
   "owner": {
-    "name": "Tim",
-    "email": ""
+    "name": "Tim"
   },
   "metadata": {
     "description": "A collection of Claude Code skill plugins"
@@ -12,7 +11,7 @@
       "name": "requirements-tracker",
       "source": "./plugins/requirements-tracker",
       "description": "Track project requirements with test verification, source tracking, and history",
-      "version": "4.0.0"
+      "version": "4.1.0"
     }
   ]
 }

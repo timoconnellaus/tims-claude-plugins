@@ -4,7 +4,5 @@
   "description": "Track project requirements with test coverage verification",
   "author": {
     "name": "Tim"
-  },
-  "commands": "./commands",
-  "skills": "./skills"
+  }
 }
