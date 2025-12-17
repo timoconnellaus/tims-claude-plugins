@@ -61,6 +61,15 @@ export function parseGherkin(input: string): GherkinParseResult {
     return { success: false, error: "Gherkin text cannot be empty" };
   }
 
+  // Check for Scenario: prefix - should not be included
+  if (/^\s*Scenario:/i.test(input)) {
+    return {
+      success: false,
+      error:
+        "Don't include 'Scenario:' prefix. Put the scenario name in the 'scenarios[].name' field instead.",
+    };
+  }
+
   // Normalize whitespace (collapse multiple spaces/newlines)
   const normalized = input.replace(/\s+/g, " ").trim();
 
@@ -195,7 +204,8 @@ export function validateGherkinStructure(
   // Rule 5: Warn about multiple Given/When/Then (might be multiple scenarios)
   if (givenCount > 1 || whenCount > 1 || thenCount > 1) {
     errors.push(
-      "Multiple Given/When/Then blocks detected. Consider using separate scenarios."
+      "Multiple Given/When/Then blocks detected. Each gherkin field should contain ONE scenario. " +
+        "For multiple scenarios, use the 'scenarios' array field with separate {name, gherkin} objects."
     );
   }
 

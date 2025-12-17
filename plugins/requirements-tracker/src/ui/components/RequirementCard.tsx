@@ -6,8 +6,16 @@ import type {
   AIAssessment,
   Question,
   Source,
+  TestResultStatus,
 } from "../../lib/types";
 import { StatusBadge, CoverageBadge } from "./StatusBadge";
+
+// Extended TestLink with runtime data from server
+interface TestLinkWithResult extends TestLink {
+  isStale: boolean;
+  lastResult?: TestResultStatus;
+  lastRunAt?: string;
+}
 
 interface RequirementData {
   id: string;
@@ -18,7 +26,7 @@ interface RequirementData {
   status: ImplementationStatus;
   gherkin: string;
   source: Source;
-  tests: TestLink[];
+  tests: TestLinkWithResult[];
   aiAssessment?: AIAssessment;
   questions?: Question[];
 }
@@ -114,9 +122,45 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
                 {requirement.tests.map((test, idx) => (
                   <li
                     key={idx}
-                    className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded"
+                    className="text-sm font-mono text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-2"
                   >
-                    {test.file}:{test.identifier}
+                    {/* Test result indicator with symbol */}
+                    <span
+                      className={`inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 text-xs font-bold ${
+                        test.lastResult === "passed"
+                          ? "bg-green-100 text-green-700"
+                          : test.lastResult === "failed" || test.lastResult === "error"
+                            ? "bg-red-100 text-red-700"
+                            : test.lastResult === "skipped"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-400"
+                      }`}
+                      title={
+                        test.lastResult === "passed"
+                          ? `Passed${test.lastRunAt ? ` at ${new Date(test.lastRunAt).toLocaleString()}` : ""}`
+                          : test.lastResult === "failed"
+                            ? `Failed${test.lastRunAt ? ` at ${new Date(test.lastRunAt).toLocaleString()}` : ""}`
+                            : test.lastResult === "error"
+                              ? `Error${test.lastRunAt ? ` at ${new Date(test.lastRunAt).toLocaleString()}` : ""}`
+                              : test.lastResult === "skipped"
+                                ? `Skipped${test.lastRunAt ? ` at ${new Date(test.lastRunAt).toLocaleString()}` : ""}`
+                                : "No test results - run tests to see status"
+                      }
+                    >
+                      {test.lastResult === "passed"
+                        ? "✓"
+                        : test.lastResult === "failed" || test.lastResult === "error"
+                          ? "✗"
+                          : test.lastResult === "skipped"
+                            ? "–"
+                            : "?"}
+                    </span>
+                    <span className="truncate">
+                      {test.file}:{test.identifier}
+                    </span>
+                    {test.isStale && (
+                      <span className="text-yellow-600 text-xs flex-shrink-0">(stale)</span>
+                    )}
                   </li>
                 ))}
               </ul>

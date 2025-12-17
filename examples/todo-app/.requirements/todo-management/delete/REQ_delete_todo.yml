@@ -1,15 +1,15 @@
 status: done
 gherkin: |-
-  Scenario: Delete existing todo
-    Given a todo store with an existing todo
-    When a user deletes the todo
-    Then the todo is removed from the store
-    And the deleted todo is returned
-
-  Scenario: Delete non-existent todo
-    Given a todo store
-    When a user tries to delete a non-existent todo
-    Then an error is thrown
+  Given a todo store with an existing todo
+  When a user deletes the todo
+  Then the todo is removed from the store
+  And the deleted todo is returned
+scenarios:
+  - name: Delete non-existent todo
+    gherkin: |-
+      Given a todo store
+      When a user tries to delete a non-existent todo
+      Then an error is thrown
 source:
   type: manual
   description: Core todo-app functionality - derived from existing implementation

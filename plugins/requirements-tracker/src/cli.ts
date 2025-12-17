@@ -11,6 +11,8 @@ import { ignoreTest } from "./commands/ignore-test";
 import { unignoreTest } from "./commands/unignore-test";
 import { move } from "./commands/move";
 import { rename } from "./commands/rename";
+import { importResults } from "./commands/import-results";
+import { run } from "./commands/run";
 
 const HELP = `
 req - Track requirements with test coverage
@@ -26,6 +28,8 @@ COMMANDS:
   status <path> [--done | --planned]                Get or set implementation status
   check [path] [--json] [--no-cache]                Check test coverage status
   assess <path> --result '{}'                       Update AI assessment
+  run [target]                                      Run tests (all, file, file:id, or requirement)
+  import-results <file> [--format <type>]           Import test results (junit-xml, bun-json)
   move <source> <dest>                              Move requirement to new path
   rename <path> <new-name>                          Rename a requirement file
   ignore-test <file:id> --reason "..."              Mark test as intentionally unlinked
@@ -358,6 +362,69 @@ EXAMPLE:
           cwd,
           path: positional[0],
           resultJson: args.result as string,
+        });
+        break;
+
+      case "run":
+        if (args.help || args.h) {
+          console.log(`
+req run - Run tests
+
+USAGE:
+  req run [target]
+
+TARGETS:
+  (none)                Run all tests
+  <file>                Run all tests in file
+  <file:identifier>     Run specific test
+  <requirement.yml>     Run all tests linked to requirement
+
+Runs tests using the configured test runner and stores results.
+Results are automatically saved and visible in the UI.
+
+EXAMPLES:
+  req run
+  req run src/auth.test.ts
+  req run src/auth.test.ts:validates login
+  req run auth/REQ_login.yml
+          `.trim());
+          break;
+        }
+        await run({
+          cwd,
+          target: positional[0],
+        });
+        break;
+
+      case "import-results":
+        if (args.help || args.h || positional.length < 1) {
+          console.log(`
+req import-results - Import test results from a file
+
+USAGE:
+  req import-results <file> [options]
+
+ARGUMENTS:
+  <file>  Path to test results file (JUnit XML or JSON)
+
+OPTIONS:
+  --format <type>  Force format: junit-xml or bun-json (auto-detects if omitted)
+
+Imports test results and stores them for display in the UI.
+Supports JUnit XML (from Bun, Jest, Vitest, pytest) and JSON formats.
+
+EXAMPLES:
+  req import-results junit.xml
+  req import-results test-results.json --format bun-json
+  bun test --reporter=junit --reporter-outfile=junit.xml && req import-results junit.xml
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        await importResults({
+          cwd,
+          file: positional[0],
+          format: args.format as string | undefined,
         });
         break;
 

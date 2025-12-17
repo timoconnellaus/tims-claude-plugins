@@ -1,16 +1,16 @@
 status: done
 gherkin: |-
-  Scenario: Empty title rejection
-    Given a todo store
-    When a user tries to add a todo with an empty title
-    Then an error is thrown
-    And no todo is created
-
-  Scenario: Whitespace-only title rejection
-    Given a todo store
-    When a user tries to add a todo with a whitespace-only title
-    Then an error is thrown
-    And no todo is created
+  Given a todo store
+  When a user tries to add a todo with an empty title
+  Then an error is thrown
+  And no todo is created
+scenarios:
+  - name: Whitespace-only title rejection
+    gherkin: |-
+      Given a todo store
+      When a user tries to add a todo with a whitespace-only title
+      Then an error is thrown
+      And no todo is created
 source:
   type: manual
   description: Input validation - derived from existing implementation

@@ -7,9 +7,12 @@ interface RequirementDetailProps {
   onVerify?: (requirement: RequirementWithData) => void;
   onFixTest?: (requirement: RequirementWithData, test: { file: string; identifier: string }, comment: string) => void;
   onAddTest?: (requirement: RequirementWithData, suggestedTest: { description: string; rationale: string }) => void;
+  onRunTest?: (file: string, identifier: string) => void;
+  onRunAllTests?: (requirementPath: string) => void;
+  runningTests?: Set<string>;
 }
 
-export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest }: RequirementDetailProps) {
+export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest, onRunTest, onRunAllTests, runningTests }: RequirementDetailProps) {
   if (!requirement) {
     return (
       <div className="h-full flex items-center justify-center text-gray-400">
@@ -62,10 +65,34 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest 
       </div>
 
       <section className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Requirement</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-2">
+          Requirement
+          {requirement.scenarios && requirement.scenarios.length > 0 && (
+            <span className="ml-2 text-gray-400 font-normal">
+              (+{requirement.scenarios.length} scenario{requirement.scenarios.length !== 1 ? "s" : ""})
+            </span>
+          )}
+        </h3>
         <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono border border-gray-200">
           {requirement.gherkin}
         </pre>
+        {requirement.scenarios && requirement.scenarios.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {requirement.scenarios.map((scenario, idx) => (
+              <li
+                key={idx}
+                className="bg-indigo-50 p-3 rounded border border-indigo-200"
+              >
+                <div className="text-xs font-medium text-indigo-700 mb-1">
+                  {scenario.name}
+                </div>
+                <pre className="text-sm text-indigo-800 whitespace-pre-wrap font-mono">
+                  {scenario.gherkin}
+                </pre>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="mb-6">
@@ -133,14 +160,28 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest 
 
       {requirement.tests.length > 0 && (
         <section className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">
-            Linked Tests ({requirement.tests.length})
-            {requirement.verification === "stale" && (
-              <span className="ml-2 text-xs bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded font-medium">
-                Stale
-              </span>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-700">
+              Linked Tests ({requirement.tests.length})
+              {requirement.verification === "stale" && (
+                <span className="ml-2 text-xs bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded font-medium">
+                  Stale
+                </span>
+              )}
+            </h3>
+            {onRunAllTests && (
+              <button
+                onClick={() => onRunAllTests(requirement.id)}
+                disabled={runningTests && requirement.tests.some(t => runningTests.has(`${t.file}:${t.identifier}`))}
+                className="px-2.5 py-1 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {runningTests && requirement.tests.some(t => runningTests.has(`${t.file}:${t.identifier}`))
+                  ? "Running..."
+                  : "▶ Run All"
+                }
+              </button>
             )}
-          </h3>
+          </div>
 
           {/* Verification Criteria - shown inline with tests */}
           {requirement.aiAssessment?.criteria && (
@@ -180,6 +221,8 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest 
                 (tc) => tc.file === test.file && tc.identifier === test.identifier
               );
               const hasIssue = testComment?.hasIssue;
+              const testKey = `${test.file}:${test.identifier}`;
+              const isRunning = runningTests?.has(testKey);
               return (
                 <li
                   key={idx}
@@ -192,10 +235,39 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest 
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`font-mono truncate ${hasIssue ? "text-red-800" : test.isStale ? "text-orange-800" : "text-gray-600"}`}>
-                      {test.file}:{test.identifier}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {/* Test result indicator */}
+                      <span
+                        className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                          test.lastResult === "passed"
+                            ? "bg-green-500"
+                            : test.lastResult === "failed" || test.lastResult === "error"
+                              ? "bg-red-500"
+                              : test.lastResult === "skipped"
+                                ? "bg-yellow-500"
+                                : "bg-gray-300"
+                        }`}
+                        title={
+                          test.lastResult
+                            ? `${test.lastResult}${test.lastRunAt ? ` at ${new Date(test.lastRunAt).toLocaleTimeString()}` : ""}`
+                            : "No test results"
+                        }
+                      />
+                      <span className={`font-mono truncate ${hasIssue ? "text-red-800" : test.isStale ? "text-orange-800" : "text-gray-600"}`}>
+                        {test.file}:{test.identifier}
+                      </span>
+                    </div>
                     <div className="flex-none flex items-center gap-1">
+                      {onRunTest && (
+                        <button
+                          onClick={() => onRunTest(test.file, test.identifier)}
+                          disabled={isRunning}
+                          className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Run this test"
+                        >
+                          {isRunning ? "..." : "▶"}
+                        </button>
+                      )}
                       {hasIssue && (
                         <span className="text-xs bg-red-200 text-red-800 px-1.5 py-0.5 rounded font-medium">
                           Issue
@@ -280,51 +352,6 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest 
         ) : (
           <div className="text-sm text-gray-400 bg-gray-50 p-3 rounded border border-dashed border-gray-300">
             No NFRs defined. Add <code className="text-xs bg-gray-200 px-1 rounded">nfrs</code> for performance, security, or accessibility constraints.
-          </div>
-        )}
-      </section>
-
-      {/* Additional Scenarios - always show */}
-      <section className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">
-          Additional Scenarios
-          {requirement.scenarios && requirement.scenarios.length > 0 && (
-            <span className="ml-2 text-gray-400 font-normal">
-              ({requirement.scenarios.length})
-            </span>
-          )}
-        </h3>
-        {requirement.scenarios && requirement.scenarios.length > 0 ? (
-          <ul className="space-y-3">
-            {requirement.scenarios.map((scenario, idx) => (
-              <li
-                key={idx}
-                className="bg-indigo-50 p-3 rounded border border-indigo-200"
-              >
-                <div className="font-medium text-indigo-900 mb-2">
-                  {scenario.name}
-                </div>
-                <pre className="text-sm text-indigo-800 whitespace-pre-wrap font-mono bg-white/50 p-2 rounded">
-                  {scenario.gherkin}
-                </pre>
-                {scenario.tags && scenario.tags.length > 0 && (
-                  <div className="mt-2 flex gap-1 flex-wrap">
-                    {scenario.tags.map((tag, tagIdx) => (
-                      <span
-                        key={tagIdx}
-                        className="text-xs bg-indigo-200 text-indigo-800 px-1.5 py-0.5 rounded"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-sm text-gray-400 bg-gray-50 p-3 rounded border border-dashed border-gray-300">
-            No additional scenarios. Add <code className="text-xs bg-gray-200 px-1 rounded">scenarios</code> for edge cases and error handling.
           </div>
         )}
       </section>

@@ -1,5 +1,4 @@
 gherkin: |-
-  Scenario: Monorepo structure
   Given the project structure
   When organizing code
   Then all packages should be in a Bun monorepo

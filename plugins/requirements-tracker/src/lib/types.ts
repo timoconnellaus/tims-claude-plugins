@@ -133,8 +133,7 @@ export interface NFR {
 // Additional scenario beyond the primary gherkin
 export interface Scenario {
   name: string; // Short identifier, e.g., "invalid_password", "rate_limited"
-  gherkin: string; // Full Given/When/Then scenario
-  tags?: string[]; // e.g., ["edge-case", "error-handling", "security"]
+  gherkin: string; // Full Given/When/Then scenario (NO "Scenario:" prefix)
 }
 
 // Single requirement within a feature
@@ -269,4 +268,40 @@ export const REQUIREMENTS_DIR = ".requirements";
 export const CONFIG_FILE = "config.yml";
 export const CACHE_FILE = "cache.json";
 export const IGNORED_TESTS_FILE = "ignored-tests.yml";
+export const TEST_RESULTS_FILE = "test-results.json";
 export const REQUIREMENT_FILE_PATTERN = /^REQ_[^/]+\.yml$/; // Matches REQ_*.yml
+
+// Test result status from test runners
+export type TestResultStatus = "passed" | "failed" | "skipped" | "error";
+
+// Individual test result from a test run
+export interface TestResult {
+  file: string; // Test file path
+  identifier: string; // Test name
+  status: TestResultStatus;
+  duration?: number; // Duration in milliseconds
+  errorMessage?: string; // Error message if failed/error
+}
+
+// Test run summary
+export interface TestRunSummary {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+}
+
+// Complete test run results
+export interface TestRunResults {
+  importedAt: string; // ISO timestamp when results were imported
+  sourceFile: string; // Path to the source results file
+  format: "junit-xml" | "bun-json";
+  summary: TestRunSummary;
+  results: TestResult[];
+}
+
+// Test results file structure (.requirements/test-results.json)
+export interface TestResultsFile {
+  version: number; // Schema version for future compatibility
+  lastRun?: TestRunResults;
+}

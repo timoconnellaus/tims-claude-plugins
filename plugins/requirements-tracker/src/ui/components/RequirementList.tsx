@@ -20,6 +20,8 @@ export interface RequirementWithData {
     identifier: string;
     hash: string;
     isStale: boolean;
+    lastResult?: "passed" | "failed" | "skipped" | "error";
+    lastRunAt?: string;
   }>;
   aiAssessment?: {
     sufficient: boolean;
@@ -68,7 +70,6 @@ export interface RequirementWithData {
   scenarios?: Array<{
     name: string;
     gherkin: string;
-    tags?: string[];
   }>;
 }
 

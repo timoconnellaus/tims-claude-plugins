@@ -1,6 +1,6 @@
 {
   "name": "requirements-tracker",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Track project requirements with test coverage verification",
   "author": {
     "name": "Tim"

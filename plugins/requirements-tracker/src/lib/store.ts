@@ -172,6 +172,25 @@ export async function loadRequirement(
       );
     }
 
+    // Validate required gherkin field
+    if (!data.gherkin || typeof data.gherkin !== "string") {
+      throw new RequirementValidationError(
+        reqPath,
+        'Missing required "gherkin" field. Every requirement must have a primary Gherkin scenario (the "scenarios" array is for ADDITIONAL scenarios only).'
+      );
+    }
+    const mainGherkinLower = data.gherkin.toLowerCase();
+    if (
+      !mainGherkinLower.includes("given") ||
+      !mainGherkinLower.includes("when") ||
+      !mainGherkinLower.includes("then")
+    ) {
+      throw new RequirementValidationError(
+        reqPath,
+        'The "gherkin" field must include Given/When/Then keywords.'
+      );
+    }
+
     // Validate priority if present
     if (data.priority !== undefined && !VALID_PRIORITIES.includes(data.priority)) {
       throw new RequirementValidationError(
@@ -263,23 +282,6 @@ export async function loadRequirement(
             reqPath,
             `scenarios[${i}] "${scenario.name}": gherkin must include Given/When/Then keywords`
           );
-        }
-        // Validate tags if present
-        if (scenario.tags !== undefined) {
-          if (!Array.isArray(scenario.tags)) {
-            throw new RequirementValidationError(
-              reqPath,
-              `scenarios[${i}] "${scenario.name}": "tags" must be an array`
-            );
-          }
-          for (const tag of scenario.tags) {
-            if (typeof tag !== "string") {
-              throw new RequirementValidationError(
-                reqPath,
-                `scenarios[${i}] "${scenario.name}": all tags must be strings`
-              );
-            }
-          }
         }
       }
     }

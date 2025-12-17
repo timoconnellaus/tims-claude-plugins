@@ -27,6 +27,8 @@ function App() {
   const [showChat, setShowChat] = useState(false);
   const [docsContent, setDocsContent] = useState("");
   const [showLegend, setShowLegend] = useState(false);
+  const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
+  const [runningAllTests, setRunningAllTests] = useState(false);
 
   // URL-based state management
   const [urlState, urlSetters] = useUrlState();
@@ -207,6 +209,79 @@ Note: testComments are required for each linked test. suggestedTests is optional
     setTimeout(() => {
       chatRef.current?.sendMessage(prompt);
     }, 100);
+  }, []);
+
+  // Handle running a single test
+  const handleRunTest = useCallback(async (file: string, identifier: string) => {
+    const testKey = `${file}:${identifier}`;
+    setRunningTests(prev => new Set(prev).add(testKey));
+    try {
+      await fetch('/api/run-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file, identifier })
+      });
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('Failed to run test:', err);
+    } finally {
+      setRunningTests(prev => {
+        const next = new Set(prev);
+        next.delete(testKey);
+        return next;
+      });
+    }
+  }, []);
+
+  // Handle running all tests for a requirement
+  const handleRunAllTests = useCallback(async (requirementPath: string) => {
+    // Find the requirement and mark all its tests as running
+    const req = allRequirements.find(r => r.id === requirementPath);
+    if (req) {
+      const testKeys = req.tests.map(t => `${t.file}:${t.identifier}`);
+      setRunningTests(prev => {
+        const next = new Set(prev);
+        testKeys.forEach(k => next.add(k));
+        return next;
+      });
+    }
+
+    try {
+      await fetch('/api/run-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requirementPath })
+      });
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('Failed to run tests:', err);
+    } finally {
+      if (req) {
+        const testKeys = req.tests.map(t => `${t.file}:${t.identifier}`);
+        setRunningTests(prev => {
+          const next = new Set(prev);
+          testKeys.forEach(k => next.delete(k));
+          return next;
+        });
+      }
+    }
+  }, [allRequirements]);
+
+  // Handle running all tests globally
+  const handleRunAllTestsGlobal = useCallback(async () => {
+    setRunningAllTests(true);
+    try {
+      await fetch('/api/run-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}) // Empty = run all tests
+      });
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('Failed to run all tests:', err);
+    } finally {
+      setRunningAllTests(false);
+    }
   }, []);
 
   // Handle verifying all unverified/stale requirements
@@ -456,15 +531,29 @@ req assess ${req.id} --result '{...}'
                     )}
                   </div>
                 </div>
-                {requirementsNeedingVerification.length > 0 && (
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={handleVerifyAll}
-                    className="px-2 py-1 text-xs font-medium rounded bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
-                    title={`Verify ${requirementsNeedingVerification.length} unverified/stale requirement${requirementsNeedingVerification.length !== 1 ? 's' : ''}`}
+                    onClick={handleRunAllTestsGlobal}
+                    disabled={runningAllTests}
+                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                      runningAllTests
+                        ? "bg-blue-200 text-blue-400 cursor-not-allowed"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    }`}
+                    title="Run all tests"
                   >
-                    Verify All ({requirementsNeedingVerification.length})
+                    {runningAllTests ? "Running..." : "▶ Run All"}
                   </button>
-                )}
+                  {requirementsNeedingVerification.length > 0 && (
+                    <button
+                      onClick={handleVerifyAll}
+                      className="px-2 py-1 text-xs font-medium rounded bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors"
+                      title={`Verify ${requirementsNeedingVerification.length} unverified/stale requirement${requirementsNeedingVerification.length !== 1 ? 's' : ''}`}
+                    >
+                      Verify All ({requirementsNeedingVerification.length})
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-2">
                 {filteredGroups.length === 0 ? (
@@ -516,6 +605,9 @@ req assess ${req.id} --result '{...}'
                 onVerify={handleVerifyRequirement}
                 onFixTest={handleFixTest}
                 onAddTest={handleAddTest}
+                onRunTest={handleRunTest}
+                onRunAllTests={handleRunAllTests}
+                runningTests={runningTests}
               />
             </div>
 

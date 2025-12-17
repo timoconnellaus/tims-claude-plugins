@@ -65,7 +65,6 @@ scenarios:
       Given a registered user
       When they enter an invalid password
       Then they should see an error message
-    tags: [error-handling]
 
 tests:
   - file: src/auth.test.ts
@@ -83,18 +82,43 @@ questions:
     answeredAt: 2024-01-15T11:00:00Z
 ```
 
-### Gherkin (REQUIRED)
+### Gherkin (REQUIRED - Primary Scenario)
 
-Every requirement must have a Gherkin-formatted description using Given/When/Then:
+Every requirement MUST have a `gherkin` field containing the primary scenario. This is NOT optional.
+
+**CRITICAL:** The `gherkin` field is REQUIRED. The `scenarios` array is for ADDITIONAL scenarios only - it does NOT replace the primary `gherkin` field. You cannot omit `gherkin` and only use `scenarios`.
+
+**IMPORTANT:** The gherkin field should contain exactly ONE scenario without the "Scenario:" prefix:
 
 ```yaml
+# CORRECT - one scenario, no prefix
 gherkin: |
   Given [precondition]
   When [action]
   Then [expected result]
 ```
 
-This ensures requirements are testable and well-defined.
+```yaml
+# WRONG - don't include "Scenario:" prefix
+gherkin: |
+  Scenario: Login
+    Given a user
+    When they login
+    Then they are authenticated
+```
+
+```yaml
+# WRONG - don't put multiple scenarios in one gherkin field
+gherkin: |
+  Given user A
+  When action X
+  Then result Y
+  Given user B
+  When action Z
+  Then result W
+```
+
+For edge cases and alternative flows, use the `scenarios` field instead (see below).
 
 ### Source (REQUIRED)
 
@@ -231,9 +255,11 @@ nfrs:
 
 The `req check` command reports unverified NFRs count.
 
-### Additional Scenarios (Optional)
+### Additional Scenarios (Optional - NOT a replacement for gherkin)
 
-Define edge cases and alternative flows beyond the primary gherkin:
+The `scenarios` array is for ADDITIONAL edge cases beyond the primary `gherkin` field. You MUST still have a primary `gherkin` field - the `scenarios` array does NOT replace it.
+
+Use this for edge cases, error handling, and alternative flows beyond the primary gherkin:
 
 ```yaml
 scenarios:
@@ -242,21 +268,18 @@ scenarios:
       Given a registered user
       When they enter an invalid password
       Then they should see an error message
-    tags: [error-handling]
 
   - name: rate_limited
     gherkin: |
       Given a user has failed login 3 times
       When they attempt to login again within 15 minutes
       Then they should be rate limited
-    tags: [security, edge-case]
 ```
 
-- `name` - Short identifier for the scenario
-- `gherkin` - Full Given/When/Then scenario (must include all three keywords)
-- `tags` - Optional array of tags for filtering/grouping
+- `name` - Short identifier for the scenario (snake_case recommended)
+- `gherkin` - Full Given/When/Then scenario (must include all three keywords, NO "Scenario:" prefix)
 
-Use scenarios to capture edge cases, error handling, and alternative paths without creating separate requirement files.
+**Note:** Each scenario's gherkin should be ONE complete Given/When/Then flow, just like the main gherkin field.
 
 ## CLI Commands
 

@@ -50,9 +50,12 @@ import {
   loadConfig,
   loadAllRequirements,
   loadIgnoredTests,
+  loadRequirement,
   getRequirementsDir,
 } from "../lib/store";
 import { getTestsWithCache } from "../lib/cache";
+import { loadTestResults, getTestLinkResult } from "../lib/result-store";
+import { runTests, runMultipleTests } from "../lib/test-runner";
 import type {
   CheckResult,
   VerificationStatus,
@@ -62,6 +65,7 @@ import type {
   CheckSummary,
   Priority,
   DependencyIssue,
+  TestResultStatus,
 } from "../lib/types";
 import { createClaudeChatHandler } from "./handler";
 
@@ -121,6 +125,11 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
   for (const test of allExtractedTests) {
     testHashMap.set(`${test.file}:${test.identifier}`, test.hash);
   }
+
+  // Load test results for matching
+  const testResultsFile = await loadTestResults(cwd);
+  const testResults = testResultsFile?.lastRun?.results || [];
+  const lastRunAt = testResultsFile?.lastRun?.importedAt;
 
   // Build a map of requirement paths to their status for dependency checking
   const reqStatusMap = new Map<string, ImplementationStatus>();
@@ -184,7 +193,7 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
         unverifiedNFRCount: number;
         gherkin: string;
         source: ParsedRequirement["data"]["source"];
-        tests: Array<TestLink & { isStale: boolean }>;
+        tests: Array<TestLink & { isStale: boolean; lastResult?: TestResultStatus; lastRunAt?: string }>;
         aiAssessment: ParsedRequirement["data"]["aiAssessment"];
         questions: ParsedRequirement["data"]["questions"];
         // Extended fields for UI display
@@ -272,12 +281,13 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
       const unverifiedNFRCount = nfrs.filter((nfr) => !nfr.verified).length;
       result.summary.unverifiedNFRs += unverifiedNFRCount;
 
-      // Add isStale flag to each test
+      // Add isStale flag and test result to each test
       const testsWithStaleFlag = req.data.tests.map((test) => {
         const key = `${test.file}:${test.identifier}`;
         const currentHash = testHashMap.get(key);
         const isStale = currentHash !== undefined && currentHash !== test.hash;
-        return { ...test, isStale };
+        const lastResult = getTestLinkResult(test, testResults);
+        return { ...test, isStale, lastResult, lastRunAt };
       });
 
       groupResult.requirements.push({
@@ -400,7 +410,12 @@ req check --json
 req assess auth/REQ_login.yml --result '{"criteria": {"noBugsInTestCode": {"result": "pass"}, ...}, "notes": "..."}'
 \`\`\`
 
-When verifying requirements, analyze the linked tests to determine if they adequately cover the requirement's Gherkin scenarios.
+When verifying requirements, analyze the linked tests to determine if they adequately cover the requirement's gherkin (primary scenario) and any additional scenarios in the 'scenarios' array.
+
+When creating requirements:
+- ALWAYS include a 'gherkin' field with the primary scenario (REQUIRED - cannot be omitted)
+- Put ONE scenario in the 'gherkin' field without "Scenario:" prefix
+- Use 'scenarios' array ONLY for additional edge cases (NOT as replacement for gherkin)
 `,
     },
     // Auto-approve req commands and file reading tools
@@ -512,6 +527,66 @@ When verifying requirements, analyze the linked tests to determine if they adequ
       "/api/docs": {
         GET() {
           return Response.json({ pages: DOC_PAGES });
+        },
+      },
+
+      "/api/run-test": {
+        async POST(req) {
+          try {
+            const body = await req.json() as {
+              file?: string;
+              identifier?: string;
+              requirementPath?: string;
+            };
+
+            let result;
+
+            if (body.requirementPath) {
+              // Run all tests for a requirement
+              const requirement = await loadRequirement(cwd, body.requirementPath);
+              if (!requirement) {
+                return Response.json(
+                  { success: false, error: `Requirement not found: ${body.requirementPath}` },
+                  { status: 404 }
+                );
+              }
+
+              if (requirement.data.tests.length === 0) {
+                return Response.json({
+                  success: true,
+                  exitCode: 0,
+                  summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
+                  message: "No tests linked to this requirement",
+                });
+              }
+
+              result = await runMultipleTests(
+                cwd,
+                requirement.data.tests.map((t) => ({ file: t.file, identifier: t.identifier }))
+              );
+            } else {
+              // Run specific test or all tests
+              result = await runTests({
+                cwd,
+                file: body.file,
+                identifier: body.identifier,
+              });
+            }
+
+            // Broadcast refresh to all clients
+            broadcastRefresh();
+
+            return Response.json({
+              success: result.exitCode === 0,
+              exitCode: result.exitCode,
+              summary: result.summary,
+            });
+          } catch (error) {
+            return Response.json(
+              { success: false, error: (error as Error).message },
+              { status: 500 }
+            );
+          }
         },
       },
     },

@@ -1,6 +1,6 @@
 {
   "name": "requirements-tracker",
-  "version": "3.0.0",
+  "version": "4.1.0",
   "type": "module",
   "bin": {
     "req": "./src/cli.ts"
@@ -20,6 +20,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fast-xml-parser": "^5.3.3",
     "glob": "^11.0.0",
     "lucide-react": "^0.559.0",
     "react": "^19.0.0",
