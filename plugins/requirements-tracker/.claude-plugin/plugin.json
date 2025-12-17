@@ -1,0 +1,5 @@
+{
+  "name": "requirements-tracker",
+  "description": "Track project requirements with test coverage verification, source tracking, and history",
+  "skills": ["./skills/requirements-tracker"]
+}

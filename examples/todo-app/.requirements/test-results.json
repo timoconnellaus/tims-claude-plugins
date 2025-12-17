@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "lastRun": {
+    "importedAt": "2025-12-17T03:57:48.294Z",
+    "sourceFile": "(executed)",
+    "format": "junit-xml",
+    "summary": {
+      "total": 24,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 23
+    },
+    "results": [
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "addTodo creates a new todo",
+        "status": "passed",
+        "duration": 0.081
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "addTodo trims whitespace from title",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "addTodo creates unique IDs for multiple todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "addTodo throws on empty title",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "getTodo retrieves a todo by id",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "getTodo returns undefined for non-existent id",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "listTodos returns all todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "deleteTodo removes a todo",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "deleteTodo returns false for non-existent id",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "completeTodo marks todo as completed",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "completeTodo is idempotent",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "completeTodo throws for non-existent todo",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "uncompleteTodo marks todo as not completed",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "uncompleteTodo throws for non-existent todo",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "listActiveTodos returns only active todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "listCompletedTodos returns only completed todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "updateTodoTitle changes the title",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "updateTodoTitle trims whitespace",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "updateTodoTitle throws on empty title",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "updateTodoTitle throws for non-existent todo",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "clearCompleted removes all completed todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "clearCompleted returns 0 when no completed todos",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "getStats returns correct counts",
+        "status": "skipped",
+        "duration": 0
+      },
+      {
+        "file": "tests/todo.test.ts",
+        "identifier": "getStats returns zeros for empty store",
+        "status": "skipped",
+        "duration": 0
+      }
+    ]
+  }
+}

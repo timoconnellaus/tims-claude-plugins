@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Test Suites" tests="5" failures="1" errors="1" time="0.5">
+  <testsuite name="src/auth.test.ts" tests="3" failures="1" errors="0" time="0.3">
+    <testcase name="validates login credentials" classname="src/auth.test.ts" time="0.1">
+    </testcase>
+    <testcase name="rejects invalid password" classname="src/auth.test.ts" time="0.05">
+      <failure message="Expected true to be false">
+AssertionError: Expected true to be false
+    at Object.&lt;anonymous&gt; (src/auth.test.ts:15:10)
+      </failure>
+    </testcase>
+    <testcase name="handles empty username" classname="src/auth.test.ts" time="0.05">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/utils.test.ts" tests="2" failures="0" errors="1" time="0.2">
+    <testcase name="formats date correctly" classname="src/utils.test.ts" time="0.1">
+    </testcase>
+    <testcase name="throws on invalid date" classname="src/utils.test.ts" time="0.1">
+      <error message="TypeError: Cannot read property">
+TypeError: Cannot read property 'toString' of undefined
+    at formatDate (src/utils.ts:10:5)
+      </error>
+    </testcase>
+  </testsuite>
+</testsuites>

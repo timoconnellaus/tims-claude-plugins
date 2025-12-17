@@ -1,0 +1,41 @@
+{
+  "testResults": [
+    {
+      "name": "src/auth.test.ts",
+      "assertionResults": [
+        {
+          "fullName": "validates login credentials",
+          "status": "passed",
+          "duration": 100
+        },
+        {
+          "fullName": "rejects invalid password",
+          "status": "failed",
+          "duration": 50,
+          "failureMessages": ["Expected true to be false"]
+        },
+        {
+          "fullName": "handles empty username",
+          "status": "passed",
+          "duration": 50
+        }
+      ]
+    },
+    {
+      "name": "src/utils.test.ts",
+      "assertionResults": [
+        {
+          "fullName": "formats date correctly",
+          "status": "passed",
+          "duration": 100
+        },
+        {
+          "fullName": "throws on invalid date",
+          "status": "failed",
+          "duration": 100,
+          "failureMessages": ["TypeError: Cannot read property 'toString' of undefined"]
+        }
+      ]
+    }
+  ]
+}

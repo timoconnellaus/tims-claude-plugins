@@ -268,7 +268,7 @@ export const REQUIREMENTS_DIR = ".requirements";
 export const CONFIG_FILE = "config.yml";
 export const CACHE_FILE = "cache.json";
 export const IGNORED_TESTS_FILE = "ignored-tests.yml";
-export const TEST_RESULTS_FILE = "test-results.json";
+export const TEST_RESULTS_FILE = "test-results.xml";
 export const REQUIREMENT_FILE_PATTERN = /^REQ_[^/]+\.yml$/; // Matches REQ_*.yml
 
 // Test result status from test runners
@@ -300,8 +300,3 @@ export interface TestRunResults {
   results: TestResult[];
 }
 
-// Test results file structure (.requirements/test-results.json)
-export interface TestResultsFile {
-  version: number; // Schema version for future compatibility
-  lastRun?: TestRunResults;
-}

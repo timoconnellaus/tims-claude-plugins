@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "file": "src/auth.test.ts",
+      "name": "validates login credentials",
+      "status": "pass",
+      "duration": 100
+    },
+    {
+      "file": "src/auth.test.ts",
+      "name": "rejects invalid password",
+      "status": "fail",
+      "duration": 50,
+      "error": {
+        "message": "Expected true to be false"
+      }
+    },
+    {
+      "file": "src/utils.test.ts",
+      "name": "formats date correctly",
+      "status": "pass",
+      "duration": 100
+    },
+    {
+      "file": "src/utils.test.ts",
+      "name": "skipped test",
+      "status": "skip",
+      "duration": 0
+    }
+  ]
+}

@@ -127,9 +127,9 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
   }
 
   // Load test results for matching
-  const testResultsFile = await loadTestResults(cwd);
-  const testResults = testResultsFile?.lastRun?.results || [];
-  const lastRunAt = testResultsFile?.lastRun?.importedAt;
+  const testRunResults = await loadTestResults(cwd);
+  const testResults = testRunResults?.results || [];
+  const lastRunAt = testRunResults?.importedAt;
 
   // Build a map of requirement paths to their status for dependency checking
   const reqStatusMap = new Map<string, ImplementationStatus>();
