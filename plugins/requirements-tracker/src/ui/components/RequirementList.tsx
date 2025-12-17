@@ -25,10 +25,21 @@ export interface RequirementWithData {
     sufficient: boolean;
     notes: string;
     assessedAt: string;
+    criteria?: {
+      noBugsInTestCode: { result: "pass" | "fail" | "na"; note?: string };
+      sufficientCoverage: { result: "pass" | "fail" | "na"; note?: string };
+      meaningfulAssertions: { result: "pass" | "fail" | "na"; note?: string };
+      correctTestSubject: { result: "pass" | "fail" | "na"; note?: string };
+      happyPathCovered: { result: "pass" | "fail" | "na"; note?: string };
+      edgeCasesAddressed: { result: "pass" | "fail" | "na"; note?: string };
+      errorScenariosHandled: { result: "pass" | "fail" | "na"; note?: string };
+      wouldFailIfBroke: { result: "pass" | "fail" | "na"; note?: string };
+    };
     testComments?: Array<{
       file: string;
       identifier: string;
       comment: string;
+      hasIssue: boolean;
     }>;
     suggestedTests?: Array<{
       description: string;
@@ -39,6 +50,25 @@ export interface RequirementWithData {
     question: string;
     answer?: string;
     answeredAt?: string;
+  }>;
+  // Extended fields
+  priority?: "critical" | "high" | "medium" | "low";
+  dependencyIssues?: string[];
+  unverifiedNFRCount?: number;
+  dependencies?: Array<{
+    path: string;
+    blocking?: boolean;
+  }>;
+  nfrs?: Array<{
+    category: "performance" | "security" | "accessibility" | "reliability" | "scalability" | "other";
+    description: string;
+    threshold?: string;
+    verified?: boolean;
+  }>;
+  scenarios?: Array<{
+    name: string;
+    gherkin: string;
+    tags?: string[];
   }>;
 }
 

@@ -8,7 +8,7 @@ import {
   saveRequirement,
   isValidRequirementPath,
 } from "../lib/store";
-import type { Requirement, SourceType } from "../lib/types";
+import type { Requirement, SourceType, Priority } from "../lib/types";
 
 const VALID_SOURCE_TYPES: SourceType[] = [
   "doc",
@@ -19,6 +19,8 @@ const VALID_SOURCE_TYPES: SourceType[] = [
   "manual",
 ];
 
+const VALID_PRIORITIES: Priority[] = ["critical", "high", "medium", "low"];
+
 interface AddArgs {
   cwd: string;
   path: string;
@@ -28,6 +30,8 @@ interface AddArgs {
   sourceUrl?: string;
   sourceDate?: string;
   force?: boolean;
+  priority?: string;
+  dependsOn?: string[];
 }
 
 export async function add(args: AddArgs): Promise<void> {
@@ -40,6 +44,8 @@ export async function add(args: AddArgs): Promise<void> {
     sourceUrl,
     sourceDate,
     force,
+    priority,
+    dependsOn,
   } = args;
 
   // Load config
@@ -81,6 +87,13 @@ export async function add(args: AddArgs): Promise<void> {
     process.exit(1);
   }
 
+  // Validate priority if provided
+  if (priority && !VALID_PRIORITIES.includes(priority as Priority)) {
+    console.error(`Invalid priority: ${priority}`);
+    console.error(`Valid priorities: ${VALID_PRIORITIES.join(", ")}`);
+    process.exit(1);
+  }
+
   // Check if file exists
   if (await requirementExists(cwd, path)) {
     if (!force) {
@@ -104,6 +117,14 @@ export async function add(args: AddArgs): Promise<void> {
     status: "planned",
   };
 
+  // Add optional fields if provided
+  if (priority) {
+    requirement.priority = priority as Priority;
+  }
+  if (dependsOn && dependsOn.length > 0) {
+    requirement.dependencies = dependsOn.map((dep) => ({ path: dep }));
+  }
+
   // Save requirement (creates parent directories automatically)
   await saveRequirement(cwd, path, requirement);
 
@@ -114,5 +135,11 @@ export async function add(args: AddArgs): Promise<void> {
   }
   if (sourceDate) {
     console.log(`  Date: ${sourceDate}`);
+  }
+  if (priority) {
+    console.log(`  Priority: ${priority}`);
+  }
+  if (dependsOn && dependsOn.length > 0) {
+    console.log(`  Dependencies: ${dependsOn.join(", ")}`);
   }
 }

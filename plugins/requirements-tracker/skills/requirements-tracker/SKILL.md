@@ -45,6 +45,28 @@ source:
   description: "Auth PRD v2.1"
   url: "https://docs.example.com/auth"
 
+status: done  # "planned" or "done"
+
+# Optional extended fields
+priority: critical  # critical | high | medium | low
+
+dependencies:
+  - path: auth/REQ_session.yml
+
+nfrs:
+  - category: performance
+    description: "Login response time"
+    threshold: "< 200ms p95"
+    verified: true
+
+scenarios:
+  - name: invalid_password
+    gherkin: |
+      Given a registered user
+      When they enter an invalid password
+      Then they should see an error message
+    tags: [error-handling]
+
 tests:
   - file: src/auth.test.ts
     identifier: "validates login credentials"
@@ -159,6 +181,83 @@ questions:
 
 The `req check` command reports unanswered questions.
 
+### Priority (Optional)
+
+Set requirement priority/criticality:
+
+```yaml
+priority: critical  # critical | high | medium | low
+```
+
+Use to prioritize implementation order and triage. The `req check` command shows a priority breakdown in the summary.
+
+### Dependencies (Optional)
+
+Link requirements that must be completed first:
+
+```yaml
+dependencies:
+  - path: auth/REQ_login.yml           # Must be done before this
+  - path: auth/REQ_session.yml
+    blocking: false                     # Soft dependency (informational only)
+```
+
+- `path` - Path to the dependent requirement (relative to `.requirements/`)
+- `blocking` - If `true` (default), `req check` warns when this req is "done" but deps are "planned"
+
+The `req check` command reports dependency issues when a "done" requirement has blocking dependencies that aren't "done".
+
+### Non-Functional Requirements (Optional)
+
+Track performance, security, accessibility, and other quality constraints:
+
+```yaml
+nfrs:
+  - category: performance
+    description: "API response time under load"
+    threshold: "< 200ms p95"
+  - category: security
+    description: "Passwords hashed with bcrypt"
+    verified: true
+  - category: accessibility
+    description: "Login form screen-reader accessible"
+    threshold: "WCAG 2.1 AA"
+```
+
+- `category` - One of: `performance`, `security`, `accessibility`, `reliability`, `scalability`, `other`
+- `description` - What the NFR requires
+- `threshold` - Measurable target (optional)
+- `verified` - Set to `true` when NFR has been verified (optional)
+
+The `req check` command reports unverified NFRs count.
+
+### Additional Scenarios (Optional)
+
+Define edge cases and alternative flows beyond the primary gherkin:
+
+```yaml
+scenarios:
+  - name: invalid_password
+    gherkin: |
+      Given a registered user
+      When they enter an invalid password
+      Then they should see an error message
+    tags: [error-handling]
+
+  - name: rate_limited
+    gherkin: |
+      Given a user has failed login 3 times
+      When they attempt to login again within 15 minutes
+      Then they should be rate limited
+    tags: [security, edge-case]
+```
+
+- `name` - Short identifier for the scenario
+- `gherkin` - Full Given/When/Then scenario (must include all three keywords)
+- `tags` - Optional array of tags for filtering/grouping
+
+Use scenarios to capture edge cases, error handling, and alternative paths without creating separate requirement files.
+
 ## CLI Commands
 
 ### Initialize
@@ -177,18 +276,39 @@ req init --test-runner "npm test" --test-glob "**/*.spec.ts"
 ### Add Requirement
 
 ```bash
-req add <path> --gherkin "..." --source-type <type> --source-desc "..." [--source-url "..."]
+req add <path> --gherkin "..." --source-type <type> --source-desc "..." [options]
 ```
 
 Creates a new requirement file. Path must be relative to `.requirements/` and must start with `REQ_`.
 
+**Options:**
+- `--gherkin` - Gherkin-format requirement (Given/When/Then)
+- `--source-type` - Source type: doc, slack, email, meeting, ticket, manual
+- `--source-desc` - Description of the source
+- `--source-url` - Optional URL to source
+- `--source-date` - Optional date (ISO format)
+- `--priority` - Priority level: critical, high, medium, low
+- `--depends-on` - Dependency path (can be repeated for multiple deps)
+- `--force` - Overwrite if exists
+
 ```bash
+# Basic requirement
 req add auth/REQ_login.yml \
   --gherkin "Given a registered user\nWhen they enter valid credentials\nThen they should be logged in" \
   --source-type doc \
   --source-desc "Auth PRD v2.1, Section 3.1" \
   --source-url "https://docs.example.com/auth-prd"
 
+# With priority and dependencies
+req add payments/REQ_checkout.yml \
+  --gherkin "Given cart has items\nWhen user clicks checkout\nThen payment is processed" \
+  --source-type doc \
+  --source-desc "Payments PRD" \
+  --priority critical \
+  --depends-on auth/REQ_login.yml \
+  --depends-on cart/REQ_add_item.yml
+
+# Manual source from user request
 req add payments/session/REQ_timeout.yml \
   --gherkin "Given an active session\nWhen 30 minutes pass with no activity\nThen the session should expire" \
   --source-type manual \
@@ -249,6 +369,9 @@ Reports:
 - **Orphaned tests** - Tests not linked to any requirement
 - **Ignored tests** - Tests intentionally not linked
 - **Unanswered questions** - Requirements with pending questions
+- **Priority breakdown** - Count by priority level (if any priorities set)
+- **Dependency issues** - "Done" requirements blocked by "planned" dependencies
+- **Unverified NFRs** - Non-functional requirements not yet verified
 
 ### Assess Test Coverage
 

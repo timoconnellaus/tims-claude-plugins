@@ -19,6 +19,25 @@ const pendingPermissions = new Map<string, {
   input: Record<string, unknown>;
 }>();
 
+/**
+ * Sandbox settings for secure command execution
+ */
+export interface SandboxSettings {
+  enabled?: boolean;
+  autoAllowBashIfSandboxed?: boolean;
+  excludedCommands?: string[];
+  allowUnsandboxedCommands?: boolean;
+  network?: {
+    allowLocalBinding?: boolean;
+    allowUnixSockets?: string[];
+    allowAllUnixSockets?: boolean;
+    httpProxyPort?: number;
+    socksProxyPort?: number;
+  };
+  // Allow additional properties for SDK compatibility
+  [key: string]: unknown;
+}
+
 export interface ClaudeChatHandlerConfig {
   defaultModel?: string;
   defaultMaxTurns?: number;
@@ -44,6 +63,11 @@ export interface ClaudeChatHandlerConfig {
    * Working directory for the Claude session. Defaults to process.cwd().
    */
   cwd?: string;
+  /**
+   * Sandbox settings for secure command execution.
+   * When enabled, bash commands run in a sandbox environment.
+   */
+  sandbox?: SandboxSettings;
 }
 
 /**
@@ -58,6 +82,7 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
     canUseTool: configCanUseTool,
     plugins = [],
     cwd = process.cwd(),
+    sandbox,
   } = config;
 
   return async function handleRequest(request: Request): Promise<Response> {
@@ -163,6 +188,7 @@ export function createClaudeChatHandler(config: ClaudeChatHandlerConfig = {}) {
               canUseTool: uiCanUseTool || configCanUseTool,
               plugins,
               cwd,
+              sandbox,
             },
           });
 

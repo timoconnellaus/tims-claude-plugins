@@ -17,7 +17,20 @@ import {
   CACHE_FILE,
   IGNORED_TESTS_FILE,
   REQUIREMENT_FILE_PATTERN,
+  Priority,
+  NFRCategory,
 } from "./types";
+
+// Valid values for validation
+const VALID_PRIORITIES: Priority[] = ["critical", "high", "medium", "low"];
+const VALID_NFR_CATEGORIES: NFRCategory[] = [
+  "performance",
+  "security",
+  "accessibility",
+  "reliability",
+  "scalability",
+  "other",
+];
 
 // === Path Helpers ===
 
@@ -157,6 +170,118 @@ export async function loadRequirement(
         reqPath,
         'Missing or invalid "status" field. Must be "planned" or "done".'
       );
+    }
+
+    // Validate priority if present
+    if (data.priority !== undefined && !VALID_PRIORITIES.includes(data.priority)) {
+      throw new RequirementValidationError(
+        reqPath,
+        `Invalid priority "${data.priority}". Must be one of: ${VALID_PRIORITIES.join(", ")}`
+      );
+    }
+
+    // Validate dependencies if present
+    if (data.dependencies) {
+      if (!Array.isArray(data.dependencies)) {
+        throw new RequirementValidationError(
+          reqPath,
+          '"dependencies" must be an array'
+        );
+      }
+      for (let i = 0; i < data.dependencies.length; i++) {
+        const dep = data.dependencies[i];
+        if (!dep.path || typeof dep.path !== "string") {
+          throw new RequirementValidationError(
+            reqPath,
+            `dependencies[${i}]: must have a "path" string field`
+          );
+        }
+        if (dep.blocking !== undefined && typeof dep.blocking !== "boolean") {
+          throw new RequirementValidationError(
+            reqPath,
+            `dependencies[${i}]: "blocking" must be a boolean`
+          );
+        }
+      }
+    }
+
+    // Validate NFRs if present
+    if (data.nfrs) {
+      if (!Array.isArray(data.nfrs)) {
+        throw new RequirementValidationError(
+          reqPath,
+          '"nfrs" must be an array'
+        );
+      }
+      for (let i = 0; i < data.nfrs.length; i++) {
+        const nfr = data.nfrs[i];
+        if (!nfr.category || !VALID_NFR_CATEGORIES.includes(nfr.category)) {
+          throw new RequirementValidationError(
+            reqPath,
+            `nfrs[${i}]: invalid category "${nfr.category}". Must be one of: ${VALID_NFR_CATEGORIES.join(", ")}`
+          );
+        }
+        if (!nfr.description || typeof nfr.description !== "string") {
+          throw new RequirementValidationError(
+            reqPath,
+            `nfrs[${i}]: must have a "description" string field`
+          );
+        }
+      }
+    }
+
+    // Validate scenarios if present
+    if (data.scenarios) {
+      if (!Array.isArray(data.scenarios)) {
+        throw new RequirementValidationError(
+          reqPath,
+          '"scenarios" must be an array'
+        );
+      }
+      for (let i = 0; i < data.scenarios.length; i++) {
+        const scenario = data.scenarios[i];
+        if (!scenario.name || typeof scenario.name !== "string") {
+          throw new RequirementValidationError(
+            reqPath,
+            `scenarios[${i}]: must have a "name" string field`
+          );
+        }
+        if (!scenario.gherkin || typeof scenario.gherkin !== "string") {
+          throw new RequirementValidationError(
+            reqPath,
+            `scenarios[${i}]: must have a "gherkin" string field`
+          );
+        }
+        // Validate gherkin format
+        const gherkinLower = scenario.gherkin.toLowerCase();
+        if (
+          !gherkinLower.includes("given") ||
+          !gherkinLower.includes("when") ||
+          !gherkinLower.includes("then")
+        ) {
+          throw new RequirementValidationError(
+            reqPath,
+            `scenarios[${i}] "${scenario.name}": gherkin must include Given/When/Then keywords`
+          );
+        }
+        // Validate tags if present
+        if (scenario.tags !== undefined) {
+          if (!Array.isArray(scenario.tags)) {
+            throw new RequirementValidationError(
+              reqPath,
+              `scenarios[${i}] "${scenario.name}": "tags" must be an array`
+            );
+          }
+          for (const tag of scenario.tags) {
+            if (typeof tag !== "string") {
+              throw new RequirementValidationError(
+                reqPath,
+                `scenarios[${i}] "${scenario.name}": all tags must be strings`
+              );
+            }
+          }
+        }
+      }
     }
 
     return {

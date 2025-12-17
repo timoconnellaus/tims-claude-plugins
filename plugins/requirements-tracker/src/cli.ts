@@ -9,8 +9,6 @@ import { check } from "./commands/check";
 import { assess } from "./commands/assess";
 import { ignoreTest } from "./commands/ignore-test";
 import { unignoreTest } from "./commands/unignore-test";
-import { ui } from "./commands/ui";
-import { docs } from "./commands/docs";
 
 const HELP = `
 req - Track requirements with test coverage
@@ -50,6 +48,9 @@ EXAMPLES:
 Run 'req <command> --help' for more information on a command.
 `.trim();
 
+// Flags that can be repeated (value becomes an array)
+const REPEATABLE_FLAGS = new Set(["depends-on"]);
+
 function parseArgs(args: string[]): Record<string, string | boolean | string[]> {
   const result: Record<string, string | boolean | string[]> = {};
   const positional: string[] = [];
@@ -66,7 +67,15 @@ function parseArgs(args: string[]): Record<string, string | boolean | string[]> 
         result[key] = true;
         i++;
       } else {
-        result[key] = next;
+        // Handle repeatable flags
+        if (REPEATABLE_FLAGS.has(key)) {
+          if (!result[key]) {
+            result[key] = [];
+          }
+          (result[key] as string[]).push(next);
+        } else {
+          result[key] = next;
+        }
         i += 2;
       }
     } else if (arg.startsWith("-")) {
@@ -149,10 +158,13 @@ OPTIONS:
   --source-desc    Description of the source
   --source-url     Optional URL to source
   --source-date    Optional date (ISO format)
+  --priority       Priority level: critical, high, medium, low
+  --depends-on     Dependency path (can be repeated for multiple deps)
   --force          Overwrite if exists
 
 EXAMPLES:
   req add auth/REQ_login.yml --gherkin "Given user enters valid credentials When they submit Then they are logged in" --source-type doc --source-desc "PRD v2.1" --source-url "https://docs.example.com/prd"
+  req add payments/REQ_checkout.yml --gherkin "Given cart has items When user checkouts Then payment processed" --source-type doc --source-desc "Payments PRD" --priority critical --depends-on auth/REQ_login.yml
           `.trim());
           if (!args.help && !args.h) process.exit(1);
           break;
@@ -166,6 +178,8 @@ EXAMPLES:
           sourceUrl: args["source-url"] as string | undefined,
           sourceDate: args["source-date"] as string | undefined,
           force: !!args.force,
+          priority: args.priority as string | undefined,
+          dependsOn: args["depends-on"] as string[] | undefined,
         });
         break;
 
@@ -294,16 +308,42 @@ EXAMPLES:
 req assess - Update AI assessment for a requirement
 
 USAGE:
-  req assess <path> --result '{"sufficient": bool, "notes": "..."}'
+  req assess <path> --result '<json>'
 
 ARGUMENTS:
   <path>  Requirement path (e.g., auth/REQ_login.yml)
 
 OPTIONS:
-  --result  JSON object with sufficient (bool) and notes (string)
+  --result  JSON object with criteria assessments and notes
 
-EXAMPLES:
-  req assess auth/REQ_login.yml --result '{"sufficient": true, "notes": "Tests cover happy path and error cases"}'
+CRITERIA (all 8 required):
+  Each criterion: { "result": "pass"|"fail"|"na", "note": "optional" }
+
+  noBugsInTestCode       No bugs in test code
+  sufficientCoverage     Tests sufficiently cover the requirement
+  meaningfulAssertions   Assertions are meaningful
+  correctTestSubject     Tests verify the correct subject
+  happyPathCovered       Happy path covered
+  edgeCasesAddressed     Edge cases addressed (use "na" if none exist)
+  errorScenariosHandled  Error scenarios covered (use "na" if none exist)
+  wouldFailIfBroke       Tests would fail if feature broke
+
+The "sufficient" field is computed: true if all criteria pass or are n/a.
+
+EXAMPLE:
+  req assess auth/REQ_login.yml --result '{
+    "criteria": {
+      "noBugsInTestCode": { "result": "pass" },
+      "sufficientCoverage": { "result": "pass", "note": "All gherkin steps covered" },
+      "meaningfulAssertions": { "result": "pass" },
+      "correctTestSubject": { "result": "pass" },
+      "happyPathCovered": { "result": "pass" },
+      "edgeCasesAddressed": { "result": "pass" },
+      "errorScenariosHandled": { "result": "na", "note": "No error scenarios" },
+      "wouldFailIfBroke": { "result": "pass" }
+    },
+    "notes": "Comprehensive coverage of login flow"
+  }'
           `.trim());
           if (!args.help && !args.h) process.exit(1);
           break;
@@ -382,6 +422,7 @@ EXAMPLES:
           `.trim());
           break;
         }
+        const { ui } = await import("./commands/ui");
         await ui({
           cwd,
           port: args.port ? parseInt(args.port as string, 10) : 3000,
@@ -405,6 +446,7 @@ EXAMPLES:
           `.trim());
           break;
         }
+        const { docs } = await import("./commands/docs");
         await docs({
           cwd,
           port: args.port ? parseInt(args.port as string, 10) : 3000,

@@ -163,6 +163,7 @@ export interface ChatMessageListProps {
 
 export interface ChatInputProps {
   onSendMessage: (content: string) => void;
+  onStopGeneration?: () => void;
   isLoading?: boolean;
   isStreaming?: boolean;
   placeholder?: string;

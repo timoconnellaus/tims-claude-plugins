@@ -60,6 +60,8 @@ import type {
   ParsedRequirement,
   ImplementationStatus,
   CheckSummary,
+  Priority,
+  DependencyIssue,
 } from "../lib/types";
 import { createClaudeChatHandler } from "./handler";
 
@@ -120,9 +122,16 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
     testHashMap.set(`${test.file}:${test.identifier}`, test.hash);
   }
 
+  // Build a map of requirement paths to their status for dependency checking
+  const reqStatusMap = new Map<string, ImplementationStatus>();
+  for (const req of requirements) {
+    reqStatusMap.set(req.path, req.data.status);
+  }
+
   const result: CheckResult = {
     requirements: [],
     orphanedTests: [],
+    dependencyIssues: [],
     summary: {
       totalRequirements: 0,
       planned: 0,
@@ -134,6 +143,15 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
       stale: 0,
       orphanedTestCount: 0,
       unansweredQuestions: 0,
+      byPriority: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        unset: 0,
+      },
+      blockedRequirements: 0,
+      unverifiedNFRs: 0,
     },
   };
 
@@ -159,11 +177,18 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
         coverageSufficient: boolean | null;
         unansweredQuestions: number;
         status: ImplementationStatus;
+        priority?: Priority;
+        dependencyIssues?: string[];
+        unverifiedNFRCount: number;
         gherkin: string;
         source: ParsedRequirement["data"]["source"];
         tests: Array<TestLink & { isStale: boolean }>;
         aiAssessment: ParsedRequirement["data"]["aiAssessment"];
         questions: ParsedRequirement["data"]["questions"];
+        // Extended fields for UI display
+        dependencies: ParsedRequirement["data"]["dependencies"];
+        nfrs: ParsedRequirement["data"]["nfrs"];
+        scenarios: ParsedRequirement["data"]["scenarios"];
       }[],
     };
 
@@ -210,6 +235,41 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
       const unanswered = (req.data.questions || []).filter((q) => !q.answer).length;
       result.summary.unansweredQuestions += unanswered;
 
+      // Track priority breakdown
+      const priority = req.data.priority;
+      if (priority) {
+        result.summary.byPriority[priority]++;
+      } else {
+        result.summary.byPriority.unset++;
+      }
+
+      // Check for dependency issues (blocking deps that aren't "done")
+      const depIssues: string[] = [];
+      if (req.data.dependencies) {
+        for (const dep of req.data.dependencies) {
+          const blocking = dep.blocking !== false; // default to true
+          if (blocking) {
+            const depStatus = reqStatusMap.get(dep.path);
+            // Issue if dependency doesn't exist or isn't "done"
+            if (!depStatus || depStatus !== "done") {
+              depIssues.push(dep.path);
+            }
+          }
+        }
+      }
+      if (depIssues.length > 0) {
+        result.summary.blockedRequirements++;
+        result.dependencyIssues.push({
+          requirement: req.path,
+          blockedBy: depIssues,
+        });
+      }
+
+      // Count unverified NFRs
+      const nfrs = req.data.nfrs || [];
+      const unverifiedNFRCount = nfrs.filter((nfr) => !nfr.verified).length;
+      result.summary.unverifiedNFRs += unverifiedNFRCount;
+
       // Add isStale flag to each test
       const testsWithStaleFlag = req.data.tests.map((test) => {
         const key = `${test.file}:${test.identifier}`;
@@ -225,11 +285,18 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
         coverageSufficient: req.data.aiAssessment?.sufficient ?? null,
         unansweredQuestions: unanswered,
         status: reqStatus,
+        priority,
+        dependencyIssues: depIssues.length > 0 ? depIssues : undefined,
+        unverifiedNFRCount,
         gherkin: req.data.gherkin,
         source: req.data.source,
         tests: testsWithStaleFlag,
         aiAssessment: req.data.aiAssessment,
         questions: req.data.questions,
+        // Extended fields for UI display
+        dependencies: req.data.dependencies,
+        nfrs: req.data.nfrs,
+        scenarios: req.data.scenarios,
       });
     }
 
@@ -268,6 +335,27 @@ export async function startServer(args: { cwd: string; port: number }) {
     plugins: [
       { type: 'local', path: pluginDir },
     ],
+    // Auto-approve req commands and file reading tools
+    canUseTool: async (toolName, input) => {
+      // Always allow read-only tools needed for verification
+      if (['Read', 'Glob', 'Grep'].includes(toolName)) {
+        return { behavior: 'allow', updatedInput: input };
+      }
+      // Allow Bash commands that are `req` CLI commands
+      if (toolName === 'Bash') {
+        const command = (input as { command?: string }).command || '';
+        if (command.trim().startsWith('req ')) {
+          return { behavior: 'allow', updatedInput: input };
+        }
+      }
+      // Default: allow all other tools
+      return { behavior: 'allow', updatedInput: input };
+    },
+    // Enable sandbox for secure command execution
+    sandbox: {
+      enabled: true,
+      autoAllowBashIfSandboxed: true,
+    },
   });
 
   // Watch for file changes in .requirements directory

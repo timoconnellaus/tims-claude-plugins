@@ -1,5 +1,3 @@
-
-
 import * as React from "react"
 import { cn } from "../lib/utils"
 import { Card } from "../shadcn/card"
@@ -11,7 +9,11 @@ import { ToolApprovalPanel } from "./ToolApprovalPanel"
 import { useClaudeChat } from "./use-claude-chat"
 import type { ClaudeChatProps } from "./types"
 
-export function ClaudeChat({
+export interface ClaudeChatHandle {
+  sendMessage: (content: string) => Promise<void>;
+}
+
+export const ClaudeChat = React.forwardRef<ClaudeChatHandle, ClaudeChatProps>(function ClaudeChat({
   endpoint,
   sessionId,
   className,
@@ -22,7 +24,7 @@ export function ClaudeChat({
   initialMessages,
   persistSession = false,
   theme = "system",
-}: ClaudeChatProps) {
+}: ClaudeChatProps, ref) {
   const {
     messages,
     isLoading,
@@ -42,6 +44,13 @@ export function ClaudeChat({
     initialMessages,
     persistSession,
   })
+
+  // Expose sendMessage via ref for external triggering
+  React.useImperativeHandle(ref, () => ({
+    sendMessage: async (content: string) => {
+      await sendMessage(content)
+    },
+  }), [sendMessage])
 
   // Apply theme
   React.useEffect(() => {
@@ -114,6 +123,7 @@ export function ClaudeChat({
       ) : (
         <ChatInput
           onSendMessage={handleSendMessage}
+          onStopGeneration={stopGeneration}
           isLoading={isLoading}
           isStreaming={isStreaming}
           placeholder={placeholder}
@@ -121,4 +131,4 @@ export function ClaudeChat({
       )}
     </Card>
   )
-}
+})

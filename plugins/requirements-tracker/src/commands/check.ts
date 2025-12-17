@@ -16,6 +16,9 @@ import type {
   TestLink,
   ParsedRequirement,
   ImplementationStatus,
+  Priority,
+  DependencyIssue,
+  PriorityBreakdown,
 } from "../lib/types";
 
 /**
@@ -86,6 +89,7 @@ export async function check(args: {
         JSON.stringify({
           requirements: [],
           orphanedTests: [],
+          dependencyIssues: [],
           summary: {
             totalRequirements: 0,
             planned: 0,
@@ -97,6 +101,9 @@ export async function check(args: {
             stale: 0,
             orphanedTestCount: 0,
             unansweredQuestions: 0,
+            byPriority: { critical: 0, high: 0, medium: 0, low: 0, unset: 0 },
+            blockedRequirements: 0,
+            unverifiedNFRs: 0,
           },
         })
       );
@@ -151,10 +158,17 @@ export async function check(args: {
     }
   }
 
+  // Build a map of requirement paths to their status for dependency checking
+  const reqStatusMap = new Map<string, ImplementationStatus>();
+  for (const req of requirements) {
+    reqStatusMap.set(req.path, req.data.status);
+  }
+
   // Build results - group by folder
   const result: CheckResult = {
     requirements: [],
     orphanedTests: [],
+    dependencyIssues: [],
     summary: {
       totalRequirements: 0,
       planned: 0,
@@ -166,6 +180,15 @@ export async function check(args: {
       stale: 0,
       orphanedTestCount: 0,
       unansweredQuestions: 0,
+      byPriority: {
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        unset: 0,
+      },
+      blockedRequirements: 0,
+      unverifiedNFRs: 0,
     },
   };
 
@@ -195,6 +218,9 @@ export async function check(args: {
         coverageSufficient: boolean | null;
         unansweredQuestions: number;
         status: ImplementationStatus;
+        priority?: Priority;
+        dependencyIssues?: string[];
+        unverifiedNFRCount: number;
       }[],
     };
 
@@ -246,6 +272,41 @@ export async function check(args: {
       const unanswered = (req.data.questions || []).filter((q) => !q.answer).length;
       result.summary.unansweredQuestions += unanswered;
 
+      // Track priority breakdown
+      const priority = req.data.priority;
+      if (priority) {
+        result.summary.byPriority[priority]++;
+      } else {
+        result.summary.byPriority.unset++;
+      }
+
+      // Check for dependency issues (blocking deps that aren't "done")
+      const depIssues: string[] = [];
+      if (req.data.dependencies) {
+        for (const dep of req.data.dependencies) {
+          const blocking = dep.blocking !== false; // default to true
+          if (blocking) {
+            const depStatus = reqStatusMap.get(dep.path);
+            // Issue if dependency doesn't exist or isn't "done"
+            if (!depStatus || depStatus !== "done") {
+              depIssues.push(dep.path);
+            }
+          }
+        }
+      }
+      if (depIssues.length > 0) {
+        result.summary.blockedRequirements++;
+        result.dependencyIssues.push({
+          requirement: req.path,
+          blockedBy: depIssues,
+        });
+      }
+
+      // Count unverified NFRs
+      const nfrs = req.data.nfrs || [];
+      const unverifiedNFRCount = nfrs.filter((nfr) => !nfr.verified).length;
+      result.summary.unverifiedNFRs += unverifiedNFRCount;
+
       // Use path as ID (e.g., "auth/REQ_login.yml")
       groupResult.requirements.push({
         id: req.path,
@@ -254,6 +315,9 @@ export async function check(args: {
         coverageSufficient: req.data.aiAssessment?.sufficient ?? null,
         unansweredQuestions: unanswered,
         status: reqStatus,
+        priority,
+        dependencyIssues: depIssues.length > 0 ? depIssues : undefined,
+        unverifiedNFRCount,
       });
     }
 
@@ -289,6 +353,18 @@ export async function check(args: {
   console.log(`  Orphaned tests: ${result.summary.orphanedTestCount}`);
   if (ignoredTestsFile.tests.length > 0) {
     console.log(`  Ignored tests: ${ignoredTestsFile.tests.length}`);
+  }
+
+  // Priority breakdown (only show if any requirements have priority set)
+  const { byPriority } = result.summary;
+  const hasPriorities = byPriority.critical > 0 || byPriority.high > 0 || byPriority.medium > 0 || byPriority.low > 0;
+  if (hasPriorities) {
+    console.log("\nPriority breakdown:");
+    if (byPriority.critical > 0) console.log(`  Critical: ${byPriority.critical}`);
+    if (byPriority.high > 0) console.log(`  High: ${byPriority.high}`);
+    if (byPriority.medium > 0) console.log(`  Medium: ${byPriority.medium}`);
+    if (byPriority.low > 0) console.log(`  Low: ${byPriority.low}`);
+    if (byPriority.unset > 0) console.log(`  Unset: ${byPriority.unset}`);
   }
 
   // Show planned requirements
@@ -362,6 +438,29 @@ export async function check(args: {
     console.log("\nRequirements with unanswered questions:");
     for (const req of withQuestions) {
       console.log(`  - ${req.id}: ${req.count} question(s)`);
+    }
+  }
+
+  // Show dependency issues
+  if (result.dependencyIssues.length > 0) {
+    console.log("\nDependency issues:");
+    for (const issue of result.dependencyIssues) {
+      console.log(`  - ${issue.requirement}: blocked by ${issue.blockedBy.join(", ")}`);
+    }
+  }
+
+  // Show unverified NFRs summary
+  if (result.summary.unverifiedNFRs > 0) {
+    console.log(`\nUnverified NFRs: ${result.summary.unverifiedNFRs}`);
+    // List requirements with unverified NFRs
+    const withUnverifiedNFRs = result.requirements.flatMap((g) =>
+      g.requirements.filter((r) => r.unverifiedNFRCount > 0).map((r) => ({
+        id: r.id,
+        count: r.unverifiedNFRCount,
+      }))
+    );
+    for (const req of withUnverifiedNFRs) {
+      console.log(`  - ${req.id}: ${req.count} unverified NFR(s)`);
     }
   }
 

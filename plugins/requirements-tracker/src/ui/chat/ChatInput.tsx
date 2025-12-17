@@ -9,6 +9,7 @@ import type { ChatInputProps } from "./types"
 
 export function ChatInput({
   onSendMessage,
+  onStopGeneration,
   isLoading = false,
   isStreaming = false,
   placeholder = "Type a message...",
@@ -73,6 +74,7 @@ export function ChatInput({
           variant="destructive"
           className="shrink-0 h-10 w-10"
           aria-label="Stop generation"
+          onClick={onStopGeneration}
         >
           <Square className="h-4 w-4" />
         </Button>

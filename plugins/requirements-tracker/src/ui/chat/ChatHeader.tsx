@@ -3,17 +3,6 @@
 import * as React from "react"
 import { cn } from "../lib/utils"
 import { Button } from "../shadcn/button"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../shadcn/alert-dialog"
 import { Trash2, Bot } from "lucide-react"
 import type { ChatHeaderProps } from "./types"
 
@@ -55,32 +44,15 @@ export function ChatHeader({
 
       {/* Actions */}
       {onClearChat && messageCount > 0 && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Clear
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Clear conversation?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will delete all messages in this conversation. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onClearChat}>
-                Clear conversation
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-2"
+          onClick={onClearChat}
+        >
+          <Trash2 className="h-4 w-4" />
+          Clear
+        </Button>
       )}
     </div>
   )
