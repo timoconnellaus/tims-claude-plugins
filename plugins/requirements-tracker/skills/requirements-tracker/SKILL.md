@@ -345,6 +345,40 @@ Removes a test link from a requirement.
 req unlink auth/REQ_login.yml src/auth.test.ts:validates login credentials
 ```
 
+### Move Requirement
+
+```bash
+req move <source-path> <dest-path>
+```
+
+Moves a requirement file to a new location. Both paths must follow the `REQ_*.yml` naming pattern.
+
+```bash
+req move auth/REQ_login.yml auth/session/REQ_login.yml
+req move REQ_old.yml features/REQ_old.yml
+```
+
+The command will:
+1. Move the requirement file to the new location
+2. Update any dependencies in other requirements that reference the moved file
+
+### Rename Requirement
+
+```bash
+req rename <path> <new-name>
+```
+
+Renames a requirement file in the same directory. The `REQ_` prefix and `.yml` extension are automatically added if missing.
+
+```bash
+req rename auth/REQ_login.yml REQ_user_login.yml
+req rename auth/REQ_login.yml user_login        # Becomes REQ_user_login.yml
+```
+
+The command will:
+1. Rename the requirement file in place
+2. Update any dependencies in other requirements that reference the renamed file
+
 ### Check Coverage
 
 ```bash

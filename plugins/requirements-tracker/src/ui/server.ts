@@ -373,6 +373,12 @@ req assess <path> --result '<json>'                   Update AI assessment for a
     wouldFailIfBroke
     Each criterion: { "result": "pass"|"fail"|"na", "note": "optional" }
 
+req move <source> <dest>                              Move requirement to new path
+    Updates dependencies in other requirements that reference the moved file
+
+req rename <path> <new-name>                          Rename a requirement file
+    REQ_ prefix and .yml extension added if missing
+
 req ignore-test <file:identifier> --reason "..."      Mark test as intentionally unlinked
 req unignore-test <file:identifier>                   Remove test from ignored list
 

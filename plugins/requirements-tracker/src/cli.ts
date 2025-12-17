@@ -9,6 +9,8 @@ import { check } from "./commands/check";
 import { assess } from "./commands/assess";
 import { ignoreTest } from "./commands/ignore-test";
 import { unignoreTest } from "./commands/unignore-test";
+import { move } from "./commands/move";
+import { rename } from "./commands/rename";
 
 const HELP = `
 req - Track requirements with test coverage
@@ -24,6 +26,8 @@ COMMANDS:
   status <path> [--done | --planned]                Get or set implementation status
   check [path] [--json] [--no-cache]                Check test coverage status
   assess <path> --result '{}'                       Update AI assessment
+  move <source> <dest>                              Move requirement to new path
+  rename <path> <new-name>                          Rename a requirement file
   ignore-test <file:id> --reason "..."              Mark test as intentionally unlinked
   unignore-test <file:id>                           Remove test from ignored list
   ui [--port <number>]                              Start web UI for viewing requirements
@@ -42,6 +46,8 @@ EXAMPLES:
   req check auth/
   req check --json
   req assess auth/REQ_login.yml --result '{"sufficient": true, "notes": "Good coverage"}'
+  req move auth/REQ_login.yml auth/session/REQ_login.yml
+  req rename auth/REQ_login.yml REQ_user_login.yml
   req ignore-test src/helpers.test.ts:utility function --reason "Helper function, no requirements"
   req unignore-test src/helpers.test.ts:utility function
 
@@ -402,6 +408,66 @@ EXAMPLES:
         await unignoreTest({
           cwd,
           testSpec: positional[0],
+        });
+        break;
+
+      case "move":
+        if (args.help || args.h || positional.length < 2) {
+          console.log(`
+req move - Move a requirement to a new path
+
+USAGE:
+  req move <source-path> <dest-path>
+
+ARGUMENTS:
+  <source-path>  Current requirement path (e.g., auth/REQ_login.yml)
+  <dest-path>    New requirement path (e.g., auth/session/REQ_login.yml)
+
+The command will:
+  1. Move the requirement file to the new location
+  2. Update any dependencies in other requirements that reference the moved file
+
+EXAMPLES:
+  req move auth/REQ_login.yml auth/session/REQ_login.yml
+  req move REQ_old.yml features/REQ_old.yml
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        await move({
+          cwd,
+          sourcePath: positional[0],
+          destPath: positional[1],
+        });
+        break;
+
+      case "rename":
+        if (args.help || args.h || positional.length < 2) {
+          console.log(`
+req rename - Rename a requirement file
+
+USAGE:
+  req rename <path> <new-name>
+
+ARGUMENTS:
+  <path>      Current requirement path (e.g., auth/REQ_login.yml)
+  <new-name>  New filename (REQ_ prefix and .yml extension added if missing)
+
+The command will:
+  1. Rename the requirement file in the same directory
+  2. Update any dependencies in other requirements that reference the renamed file
+
+EXAMPLES:
+  req rename auth/REQ_login.yml REQ_user_login.yml
+  req rename auth/REQ_login.yml user_login        # Becomes REQ_user_login.yml
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        await rename({
+          cwd,
+          oldPath: positional[0],
+          newName: positional[1],
         });
         break;
 
