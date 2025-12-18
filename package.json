@@ -8,7 +8,9 @@
     "version:bump:minor": "bun run scripts/bump-version.ts --minor",
     "version:bump:major": "bun run scripts/bump-version.ts --major",
     "build": "bun run scripts/build.ts",
-    "release": "bun run scripts/release.ts"
+    "release": "bun run scripts/release.ts",
+    "use:local": "bun run scripts/use-local.ts",
+    "use:installed": "bun run scripts/use-installed.ts"
   },
   "devDependencies": {
     "husky": "^9.1.7"
