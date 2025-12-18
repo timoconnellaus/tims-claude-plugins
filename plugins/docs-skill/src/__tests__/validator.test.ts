@@ -187,7 +187,7 @@ Content`;
     const errors = validateRawMarkdown(content, "test.md");
 
     expect(errors.some((e) => e.type === "missing_frontmatter")).toBe(true);
-    expect(errors[0].error || errors[0].message).toContain("YAML");
+    expect(errors[0].message).toContain("YAML");
   });
 
   it("validates content after parsing frontmatter", () => {

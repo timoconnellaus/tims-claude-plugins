@@ -47,6 +47,11 @@ export interface RequirementWithData {
       description: string;
       rationale: string;
     }>;
+    suggestedScenarios?: Array<{
+      name: string;
+      gherkin: string;
+      rationale: string;
+    }>;
   };
   questions?: Array<{
     question: string;
@@ -70,6 +75,7 @@ export interface RequirementWithData {
   scenarios?: Array<{
     name: string;
     gherkin: string;
+    suggested?: boolean;
   }>;
 }
 

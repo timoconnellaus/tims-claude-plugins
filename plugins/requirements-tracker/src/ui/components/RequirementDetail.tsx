@@ -7,12 +7,16 @@ interface RequirementDetailProps {
   onVerify?: (requirement: RequirementWithData) => void;
   onFixTest?: (requirement: RequirementWithData, test: { file: string; identifier: string }, comment: string) => void;
   onAddTest?: (requirement: RequirementWithData, suggestedTest: { description: string; rationale: string }) => void;
+  onAddScenario?: (requirement: RequirementWithData, scenario: { name: string; gherkin: string; rationale: string }) => void;
+  onAcceptScenario?: (requirement: RequirementWithData, scenarioName: string) => void;
+  onRejectScenario?: (requirement: RequirementWithData, scenarioName: string) => void;
+  onRejectSuggestedScenario?: (requirement: RequirementWithData, scenario: { name: string; gherkin: string; rationale: string }) => void;
   onRunTest?: (file: string, identifier: string) => void;
   onRunAllTests?: (requirementPath: string) => void;
   runningTests?: Set<string>;
 }
 
-export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest, onRunTest, onRunAllTests, runningTests }: RequirementDetailProps) {
+export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest, onAddScenario, onAcceptScenario, onRejectScenario, onRejectSuggestedScenario, onRunTest, onRunAllTests, runningTests }: RequirementDetailProps) {
   if (!requirement) {
     return (
       <div className="h-full flex items-center justify-center text-gray-400">
@@ -65,34 +69,131 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest,
       </div>
 
       <section className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">
-          Requirement
-          {requirement.scenarios && requirement.scenarios.length > 0 && (
-            <span className="ml-2 text-gray-400 font-normal">
-              (+{requirement.scenarios.length} scenario{requirement.scenarios.length !== 1 ? "s" : ""})
-            </span>
-          )}
-        </h3>
-        <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono border border-gray-200">
-          {requirement.gherkin}
-        </pre>
-        {requirement.scenarios && requirement.scenarios.length > 0 && (
-          <ul className="mt-3 space-y-2">
-            {requirement.scenarios.map((scenario, idx) => (
-              <li
-                key={idx}
-                className="bg-indigo-50 p-3 rounded border border-indigo-200"
-              >
-                <div className="text-xs font-medium text-indigo-700 mb-1">
-                  {scenario.name}
-                </div>
-                <pre className="text-sm text-indigo-800 whitespace-pre-wrap font-mono">
-                  {scenario.gherkin}
-                </pre>
-              </li>
-            ))}
-          </ul>
-        )}
+        {(() => {
+          const actualScenarios = requirement.scenarios || [];
+          const suggestedFromAssessment = requirement.aiAssessment?.suggestedScenarios || [];
+          const totalCount = actualScenarios.length + suggestedFromAssessment.length;
+          const hasScenarios = totalCount > 0;
+
+          return (
+            <>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Requirement
+                {hasScenarios && (
+                  <span className="ml-2 text-gray-400 font-normal">
+                    (+{totalCount} scenario{totalCount !== 1 ? "s" : ""})
+                  </span>
+                )}
+              </h3>
+              <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono border border-gray-200">
+                {requirement.gherkin}
+              </pre>
+              {hasScenarios && (
+                <ul className="mt-3 space-y-2">
+                  {/* Actual scenarios (accepted or pending acceptance) */}
+                  {actualScenarios.map((scenario, idx) => (
+                    <li
+                      key={`actual-${idx}`}
+                      className={`p-3 rounded border ${
+                        scenario.suggested
+                          ? "bg-amber-50 border-amber-300 border-dashed"
+                          : "bg-indigo-50 border-indigo-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-medium ${
+                            scenario.suggested ? "text-amber-700" : "text-indigo-700"
+                          }`}>
+                            {scenario.name}
+                          </span>
+                          {scenario.suggested && (
+                            <span className="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        {scenario.suggested && (
+                          <div className="flex gap-1">
+                            {onAcceptScenario && (
+                              <button
+                                onClick={() => onAcceptScenario(requirement, scenario.name)}
+                                className="px-2 py-0.5 text-xs font-medium rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+                              >
+                                Accept
+                              </button>
+                            )}
+                            {onRejectScenario && (
+                              <button
+                                onClick={() => onRejectScenario(requirement, scenario.name)}
+                                className="px-2 py-0.5 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <pre className={`text-sm whitespace-pre-wrap font-mono ${
+                        scenario.suggested ? "text-amber-800" : "text-indigo-800"
+                      }`}>
+                        {scenario.gherkin}
+                      </pre>
+                    </li>
+                  ))}
+                  {/* Suggested scenarios from AI assessment (not yet added) */}
+                  {suggestedFromAssessment.map((ss, idx) => (
+                    <li
+                      key={`suggested-${idx}`}
+                      className="p-3 rounded border bg-blue-50 border-blue-300 border-dashed"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-blue-700">
+                            {ss.name}
+                          </span>
+                          <span className="text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded">
+                            AI Suggested
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                          {onAddScenario && (
+                            <button
+                              onClick={() => {
+                                console.log('[RequirementDetail] Accept button clicked for:', ss.name, 'onAddScenario:', !!onAddScenario);
+                                onAddScenario(requirement, ss);
+                              }}
+                              className="px-2 py-0.5 text-xs font-medium rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            >
+                              Accept
+                            </button>
+                          )}
+                          {onRejectSuggestedScenario && (
+                            <button
+                              onClick={() => {
+                                console.log('[RequirementDetail] Reject button clicked for:', ss.name);
+                                onRejectSuggestedScenario(requirement, ss);
+                              }}
+                              className="px-2 py-0.5 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <pre className="text-sm whitespace-pre-wrap font-mono text-blue-800">
+                        {ss.gherkin}
+                      </pre>
+                      <div className="mt-2 text-xs text-blue-600">
+                        <span className="font-medium">Why:</span> {ss.rationale}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          );
+        })()}
       </section>
 
       <section className="mb-6">

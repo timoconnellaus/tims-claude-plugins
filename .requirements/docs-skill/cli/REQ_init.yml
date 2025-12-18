@@ -46,6 +46,129 @@ tests:
     identifier: ensures topics is an array when loading
     hash: 70fb893ff00063049e074a9f044fcc4a8d71f6fba786b9156f9514e4ba3af4fa
   - file: plugins/docs-skill/src/__tests__/store.test.ts
-    identifier: throws on unsupported config version
-    hash: f6a0f9c0914a334fe06a54ac3de2e11bb17fa0315e5b4dbdd402195a22e74802
+    identifier: returns null on unsupported config version
+    hash: affaf2d5f650aac17252e21370db9afd97f7a919fa77bd00eaf313dcb922bdc9
 status: done
+aiAssessment:
+  sufficient: true
+  notes: Tests comprehensively cover the store layer that implements docs init.
+    They verify .docs directory creation, config.yml creation with proper
+    defaults (version 1, empty topics), and loading. Edge cases like idempotent
+    creation and error scenarios are well covered. The tests focus on unit
+    testing the store functions rather than the CLI command itself, which is a
+    reasonable approach.
+  assessedAt: 2025-12-17T23:52:07.855Z
+  criteria:
+    noBugsInTestCode:
+      result: pass
+      note: Tests are well-structured with proper setup/teardown using temp
+        directories. No bugs detected.
+    sufficientCoverage:
+      result: pass
+      note: Tests cover .docs directory creation and config.yml creation/loading -
+        both aspects of the gherkin requirement.
+    meaningfulAssertions:
+      result: pass
+      note: Assertions check real file system state and config structure, not just
+        mock interactions.
+    correctTestSubject:
+      result: pass
+      note: Tests verify the store functions that implement init functionality. CLI
+        integration not tested but unit coverage is solid.
+    happyPathCovered:
+      result: pass
+      note: createDocsDir and saveConfig tests cover the main success flow of creating
+        .docs with config.yml.
+    edgeCasesAddressed:
+      result: pass
+      note: Tests cover idempotent creation (double init), missing topics array,
+        malformed configs.
+    errorScenariosHandled:
+      result: pass
+      note: Tests cover missing config, unsupported version, and malformed config
+        scenarios.
+    wouldFailIfBroke:
+      result: pass
+      note: Tests would detect if directory creation or config saving functionality
+        broke.
+  testComments:
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: creates .docs directory
+      comment: Core test for the Then clause - verifies .docs folder is created via
+        createDocsDir function
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: saves and loads config
+      comment: Verifies config.yml can be saved and loaded with all fields preserved -
+        covers the config.yml part of the requirement
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns config with version 1
+      comment: Verifies default config has correct version - part of config structure
+        validation
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns path to .docs directory
+      comment: Helper function test - ensures correct path construction for .docs
+        directory
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns path to config.yml
+      comment: Helper function test - ensures correct config.yml path construction
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns false when .docs does not exist
+      comment: Useful for pre-init state detection
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns true when .docs exists
+      comment: Useful for checking post-init state
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: does not error if directory already exists
+      comment: Important edge case - running init twice should not fail (idempotent)
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns config with empty topics array
+      comment: Verifies default config structure has empty topics array
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: does not include lastSync by default
+      comment: Verifies lastSync is not set on new configs - correct initial state
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: creates .docs directory when saving
+      comment: Important - saveConfig creates directory if missing, supporting the
+        init flow
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns null when config does not exist
+      comment: Error scenario - properly handles loading before init
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: ensures topics is an array when loading
+      comment: Edge case - handles malformed config files gracefully
+      hasIssue: false
+    - file: plugins/docs-skill/src/__tests__/store.test.ts
+      identifier: returns null on unsupported config version
+      comment: Error scenario - returns null when config version is unsupported for
+        forward compatibility
+      hasIssue: false
+  suggestedScenarios: []
+scenarios:
+  - name: idempotent_init
+    gherkin: |-
+      Given .docs folder already exists
+      When they run docs init again
+      Then no error occurs
+      And .docs folder remains intact
+  - name: unsupported_config_version
+    gherkin: |-
+      Given .docs folder contains a config with unsupported version
+      When they load the config
+      Then null is returned instead of crashing
+  - name: malformed_config_handling
+    gherkin: |-
+      Given .docs folder contains a config without topics field
+      When they load the config
+      Then topics defaults to empty array

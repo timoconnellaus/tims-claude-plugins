@@ -129,7 +129,7 @@ describe("store", () => {
       expect(config?.topics).toEqual([]);
     });
 
-    it("throws on unsupported config version", async () => {
+    it("returns null on unsupported config version", async () => {
       const docsDir = join(tempDir, DOCS_DIR);
       await mkdir(docsDir, { recursive: true });
       await writeFile(
@@ -138,7 +138,7 @@ describe("store", () => {
       );
 
       const config = await loadConfig(tempDir);
-      expect(config).toBeNull(); // Should return null due to error
+      expect(config).toBeNull();
     });
   });
 

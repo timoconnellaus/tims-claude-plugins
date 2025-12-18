@@ -29,6 +29,13 @@ export interface SuggestedTest {
   rationale: string; // Why this test is needed
 }
 
+// Suggested scenario from AI assessment
+export interface SuggestedScenario {
+  name: string; // Short identifier (snake_case)
+  gherkin: string; // Given/When/Then description
+  rationale: string; // Why this scenario should be added
+}
+
 // Verification criterion result
 export type CriterionResult = "pass" | "fail" | "na"; // na = not applicable
 
@@ -82,6 +89,7 @@ export interface AIAssessment {
   criteria?: VerificationCriteria; // Explicit criteria assessments (optional for backward compat)
   testComments?: TestComment[]; // Per-test comments
   suggestedTests?: SuggestedTest[]; // Tests that should be written
+  suggestedScenarios?: SuggestedScenario[]; // Scenarios that should be documented
 }
 
 // Clarification question about a requirement
@@ -134,6 +142,7 @@ export interface NFR {
 export interface Scenario {
   name: string; // Short identifier, e.g., "invalid_password", "rate_limited"
   gherkin: string; // Full Given/When/Then scenario (NO "Scenario:" prefix)
+  suggested?: boolean; // True if AI-suggested, pending user acceptance
 }
 
 // Single requirement within a feature

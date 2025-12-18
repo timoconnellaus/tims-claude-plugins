@@ -2,8 +2,9 @@
  * Open documentation in browser
  */
 
-import { startServer } from "../ui/server";
+import { spawn } from "node:child_process";
 import { requirementsDirExists } from "../lib/store";
+import { dirname, join } from "path";
 
 export async function docs(args: { cwd: string; port: number }) {
   const { cwd, port } = args;
@@ -14,25 +15,45 @@ export async function docs(args: { cwd: string; port: number }) {
     process.exit(1);
   }
 
-  // Start the server
-  await startServer({ cwd, port });
+  // Start TanStack Start (Vite) - handles both frontend and API routes
+  const pluginDir = dirname(dirname(import.meta.dir));
+  const viteConfigPath = join(pluginDir, "vite.config.ts");
 
-  // Open browser directly to docs page
-  const url = `http://localhost:${port}#docs`;
-  try {
-    if (process.platform === "darwin") {
-      Bun.spawn(["open", url]);
-    } else if (process.platform === "linux") {
-      Bun.spawn(["xdg-open", url]);
-    } else if (process.platform === "win32") {
-      Bun.spawn(["cmd", "/c", "start", url]);
+  console.log(`Starting Requirements Tracker docs on port ${port}...`);
+
+  const viteProcess = spawn(
+    "bunx",
+    ["vite", "--port", String(port), "--config", viteConfigPath],
+    {
+      cwd: pluginDir,
+      stdio: ["inherit", "inherit", "inherit"],
+      env: {
+        ...process.env,
+        // Pass the user's project directory to the Vite server
+        REQ_PROJECT_CWD: cwd,
+      },
     }
-  } catch {
-    // Ignore errors opening browser
-  }
+  );
+
+  // Open browser directly to docs page after a short delay
+  const url = `http://localhost:${port}#docs`;
+  setTimeout(() => {
+    try {
+      if (process.platform === "darwin") {
+        spawn("open", [url], { stdio: "ignore" });
+      } else if (process.platform === "linux") {
+        spawn("xdg-open", [url], { stdio: "ignore" });
+      } else if (process.platform === "win32") {
+        spawn("cmd", ["/c", "start", url], { stdio: "ignore" });
+      }
+    } catch {
+      // Ignore errors opening browser
+    }
+  }, 2000);
 
   console.log(`Documentation available at ${url}`);
 
-  // Keep running until Ctrl+C
-  await new Promise(() => {});
+  await new Promise<void>((resolve) => {
+    viteProcess.on("close", () => resolve());
+  });
 }

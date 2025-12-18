@@ -12,6 +12,7 @@ import type {
   AIAssessment,
   TestComment,
   SuggestedTest,
+  SuggestedScenario,
   VerificationCriteria,
   CriterionAssessment,
   CriterionResult,
@@ -23,6 +24,7 @@ interface AssessResult {
   notes: string;
   testComments?: TestComment[];
   suggestedTests?: SuggestedTest[];
+  suggestedScenarios?: SuggestedScenario[];
 }
 
 // Helper to validate a single criterion
@@ -121,11 +123,30 @@ export async function assess(args: {
       }
     }
 
+    // Validate optional suggestedScenarios
+    if (parsed.suggestedScenarios !== undefined) {
+      if (!Array.isArray(parsed.suggestedScenarios)) {
+        throw new Error("suggestedScenarios must be an array");
+      }
+      for (const ss of parsed.suggestedScenarios) {
+        if (
+          typeof ss.name !== "string" ||
+          typeof ss.gherkin !== "string" ||
+          typeof ss.rationale !== "string"
+        ) {
+          throw new Error(
+            "suggestedScenarios entries must have name, gherkin, and rationale strings"
+          );
+        }
+      }
+    }
+
     assessResult = {
       criteria: validatedCriteria,
       notes: parsed.notes,
       testComments: parsed.testComments,
       suggestedTests: parsed.suggestedTests,
+      suggestedScenarios: parsed.suggestedScenarios,
     };
   } catch (error) {
     console.error("Invalid --result format.");
@@ -179,6 +200,7 @@ export async function assess(args: {
     criteria: assessResult.criteria,
     testComments: assessResult.testComments,
     suggestedTests: assessResult.suggestedTests,
+    suggestedScenarios: assessResult.suggestedScenarios,
   };
 
   requirement.data.aiAssessment = assessment;
@@ -202,5 +224,8 @@ export async function assess(args: {
   }
   if (assessment.suggestedTests?.length) {
     console.log(`  Suggested tests: ${assessment.suggestedTests.length}`);
+  }
+  if (assessment.suggestedScenarios?.length) {
+    console.log(`  Suggested scenarios: ${assessment.suggestedScenarios.length}`);
   }
 }

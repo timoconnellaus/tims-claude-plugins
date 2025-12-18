@@ -13,6 +13,9 @@ import { move } from "./commands/move";
 import { rename } from "./commands/rename";
 import { importResults } from "./commands/import-results";
 import { run } from "./commands/run";
+import { addScenario } from "./commands/add-scenario";
+import { acceptScenario } from "./commands/accept-scenario";
+import { rejectScenario } from "./commands/reject-scenario";
 
 const HELP = `
 req - Track requirements with test coverage
@@ -34,6 +37,9 @@ COMMANDS:
   rename <path> <new-name>                          Rename a requirement file
   ignore-test <file:id> --reason "..."              Mark test as intentionally unlinked
   unignore-test <file:id>                           Remove test from ignored list
+  add-scenario <path> --name "..." --gherkin "..."  Add a scenario to a requirement
+  accept-scenario <path> <name>                     Accept a suggested scenario
+  reject-scenario <path> <name>                     Reject a suggested scenario
   ui [--port <number>]                              Start web UI for viewing requirements
   docs [--port <number>]                            Open documentation in browser
 
@@ -478,6 +484,109 @@ EXAMPLES:
         });
         break;
 
+      case "add-scenario":
+        if (args.help || args.h || positional.length < 1 || !args.name || !args.gherkin) {
+          console.log(`
+req add-scenario - Add a scenario to a requirement
+
+USAGE:
+  req add-scenario <path> --name "..." --gherkin "..." [--suggested]
+
+ARGUMENTS:
+  <path>  Requirement path (e.g., auth/REQ_login.yml)
+
+OPTIONS:
+  --name       Short identifier for the scenario (e.g., "invalid_password")
+  --gherkin    Full Given/When/Then scenario text
+  --suggested  Mark as AI-suggested (pending acceptance)
+
+EXAMPLES:
+  req add-scenario auth/REQ_login.yml --name "invalid_password" --gherkin "Given user enters wrong password When they submit Then error is shown"
+  req add-scenario auth/REQ_login.yml --name "rate_limited" --gherkin "Given user failed 5 times When they try again Then they are blocked" --suggested
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        try {
+          await addScenario({
+            cwd,
+            path: positional[0],
+            name: args.name as string,
+            gherkin: args.gherkin as string,
+            suggested: !!args.suggested,
+          });
+        } catch (error) {
+          console.error((error as Error).message);
+          process.exit(1);
+        }
+        break;
+
+      case "accept-scenario":
+        if (args.help || args.h || positional.length < 2) {
+          console.log(`
+req accept-scenario - Accept a suggested scenario
+
+USAGE:
+  req accept-scenario <path> <scenario-name>
+
+ARGUMENTS:
+  <path>           Requirement path (e.g., auth/REQ_login.yml)
+  <scenario-name>  Name of the scenario to accept
+
+Removes the "suggested" flag from a scenario, making it a permanent part
+of the requirement.
+
+EXAMPLES:
+  req accept-scenario auth/REQ_login.yml invalid_password
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        try {
+          await acceptScenario({
+            cwd,
+            path: positional[0],
+            scenarioName: positional[1],
+          });
+        } catch (error) {
+          console.error((error as Error).message);
+          process.exit(1);
+        }
+        break;
+
+      case "reject-scenario":
+        if (args.help || args.h || positional.length < 2) {
+          console.log(`
+req reject-scenario - Reject a suggested scenario
+
+USAGE:
+  req reject-scenario <path> <scenario-name>
+
+ARGUMENTS:
+  <path>           Requirement path (e.g., auth/REQ_login.yml)
+  <scenario-name>  Name of the scenario to reject
+
+Removes a suggested scenario from the requirement. Only works on scenarios
+that have the "suggested" flag set.
+
+EXAMPLES:
+  req reject-scenario auth/REQ_login.yml invalid_password
+          `.trim());
+          if (!args.help && !args.h) process.exit(1);
+          break;
+        }
+        try {
+          await rejectScenario({
+            cwd,
+            path: positional[0],
+            scenarioName: positional[1],
+          });
+        } catch (error) {
+          console.error((error as Error).message);
+          process.exit(1);
+        }
+        break;
+
       case "move":
         if (args.help || args.h || positional.length < 2) {
           console.log(`
@@ -548,6 +657,8 @@ USAGE:
 
 OPTIONS:
   --port <number>  Port to run server on (default: 3000)
+
+Starts TanStack Start dev server with hot module replacement.
 
 EXAMPLES:
   req ui

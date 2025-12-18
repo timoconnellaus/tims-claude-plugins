@@ -106,10 +106,13 @@ export function getRepoType(path: string): RepositoryType {
 
 /**
  * Check if a repository path exists and is valid
+ * @param path - The path to validate
+ * @param cwd - Base directory for resolving relative paths (defaults to process.cwd())
  */
 export async function validateRepoPath(
-  path: string
-): Promise<{ valid: boolean; error?: string }> {
+  path: string,
+  cwd?: string
+): Promise<{ valid: boolean; error?: string; resolved?: string }> {
   const type = getRepoType(path);
 
   if (type === "github") {
@@ -120,11 +123,11 @@ export async function validateRepoPath(
     return { valid: true };
   }
 
-  // For local paths, check existence
-  const resolved = resolve(path);
+  // For local paths, resolve relative to cwd and check existence
+  const resolved = cwd ? resolve(cwd, path) : resolve(path);
   try {
     await access(resolved);
-    return { valid: true };
+    return { valid: true, resolved };
   } catch {
     return { valid: false, error: `Path does not exist: ${resolved}` };
   }
@@ -132,19 +135,25 @@ export async function validateRepoPath(
 
 /**
  * Add a repository to the global config
+ * @param path - The path to the repository (local or GitHub URL)
+ * @param docsPath - Optional subdirectory containing docs
+ * @param cwd - Base directory for resolving relative paths (defaults to process.cwd())
  */
 export async function addRepository(
   path: string,
-  docsPath?: string
+  docsPath?: string,
+  cwd?: string
 ): Promise<{ success: boolean; error?: string; repository?: Repository }> {
   // Validate path
-  const validation = await validateRepoPath(path);
+  const validation = await validateRepoPath(path, cwd);
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
 
+  // Use the resolved path from validation for local repos
+  const resolvedPath = validation.resolved || path;
   const config = await loadRepositories();
-  const id = normalizeRepoPath(path);
+  const id = normalizeRepoPath(resolvedPath);
 
   // Check for duplicates
   if (config.repositories.some((r) => r.id === id)) {
@@ -154,7 +163,7 @@ export async function addRepository(
   const repository: Repository = {
     id,
     type: getRepoType(path),
-    path: getRepoType(path) === "local" ? resolve(path) : path,
+    path: getRepoType(path) === "local" ? resolvedPath : path,
     addedAt: new Date().toISOString(),
     docsPath,
   };

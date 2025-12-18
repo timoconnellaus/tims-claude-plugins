@@ -186,9 +186,13 @@ aiAssessment:
       rationale: "No coverage for rate limiting behavior"
     - description: "Given expired session token When API called Then 401 returned"
       rationale: "Session expiry not tested"
+  suggestedScenarios:                           # Scenarios to document (optional)
+    - name: "rate_limited"
+      gherkin: "Given user failed 5 times\nWhen they try again\nThen blocked"
+      rationale: "Test covers rate limiting not documented in scenarios"
 ```
 
-The `testComments` field allows per-test feedback, while `suggestedTests` captures gaps in coverage.
+The `testComments` field allows per-test feedback, `suggestedTests` captures gaps in test coverage, and `suggestedScenarios` identifies test behaviors that should be documented as scenarios.
 
 ### Questions
 
@@ -274,12 +278,16 @@ scenarios:
       Given a user has failed login 3 times
       When they attempt to login again within 15 minutes
       Then they should be rate limited
+    suggested: true  # AI-suggested, pending acceptance
 ```
 
 - `name` - Short identifier for the scenario (snake_case recommended)
 - `gherkin` - Full Given/When/Then scenario (must include all three keywords, NO "Scenario:" prefix)
+- `suggested` - Optional boolean. If `true`, indicates this scenario was suggested by AI and is pending user acceptance
 
 **Note:** Each scenario's gherkin should be ONE complete Given/When/Then flow, just like the main gherkin field.
+
+**Suggested scenarios:** When AI assessment identifies test behaviors not documented as scenarios, they can be added with `suggested: true`. Use `req accept-scenario` to accept them or `req reject-scenario` to remove them.
 
 ## CLI Commands
 
@@ -468,6 +476,56 @@ Removes a test from the ignored list.
 
 ```bash
 req unignore-test src/utils.test.ts:helper function tests
+```
+
+### Add Scenario
+
+```bash
+req add-scenario <path> --name "..." --gherkin "..." [--suggested]
+```
+
+Adds a scenario to a requirement's `scenarios` array.
+
+**Options:**
+- `--name` - Short identifier for the scenario (e.g., "invalid_password")
+- `--gherkin` - Full Given/When/Then scenario text
+- `--suggested` - Mark as AI-suggested (pending user acceptance)
+
+```bash
+# Add an accepted scenario
+req add-scenario auth/REQ_login.yml \
+  --name "invalid_password" \
+  --gherkin "Given user enters wrong password\nWhen they submit\nThen error is shown"
+
+# Add an AI-suggested scenario (pending acceptance)
+req add-scenario auth/REQ_login.yml \
+  --name "rate_limited" \
+  --gherkin "Given user failed 5 times\nWhen they try again\nThen blocked" \
+  --suggested
+```
+
+### Accept Scenario
+
+```bash
+req accept-scenario <path> <scenario-name>
+```
+
+Accepts a suggested scenario by removing its `suggested` flag.
+
+```bash
+req accept-scenario auth/REQ_login.yml rate_limited
+```
+
+### Reject Scenario
+
+```bash
+req reject-scenario <path> <scenario-name>
+```
+
+Rejects a suggested scenario by removing it from the requirement. Only works on scenarios with `suggested: true`.
+
+```bash
+req reject-scenario auth/REQ_login.yml rate_limited
 ```
 
 ## Verification Status

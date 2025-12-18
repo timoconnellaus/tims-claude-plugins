@@ -2,7 +2,8 @@
  * Test runner - executes tests and captures results
  */
 
-import { spawn } from "bun";
+import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadConfig } from "./store";
 import { junitXml } from "./result-parsers";
@@ -76,12 +77,11 @@ export async function runTests(
   // Build command
   const command = buildCommand(config.testRunner, { file, identifier, junitOutfile });
 
-  // Execute test runner
-  const proc = spawn({
-    cmd: command,
+  // Execute test runner using Node's child_process.spawn
+  const [cmd, ...args] = command;
+  const proc = spawn(cmd, args, {
     cwd,
-    stdout: "pipe",
-    stderr: "pipe",
+    stdio: ["pipe", "pipe", "pipe"],
   });
 
   // Collect output
@@ -89,33 +89,27 @@ export async function runTests(
   let stderr = "";
 
   // Read stdout
-  const stdoutReader = proc.stdout.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await stdoutReader.read();
-    if (done) break;
-    const text = decoder.decode(value);
+  proc.stdout?.on("data", (data: Buffer) => {
+    const text = data.toString();
     stdout += text;
     if (streamOutput) {
       process.stdout.write(text);
     }
-  }
+  });
 
   // Read stderr
-  const stderrReader = proc.stderr.getReader();
-  while (true) {
-    const { done, value } = await stderrReader.read();
-    if (done) break;
-    const text = decoder.decode(value);
+  proc.stderr?.on("data", (data: Buffer) => {
+    const text = data.toString();
     stderr += text;
     if (streamOutput) {
       process.stderr.write(text);
     }
-  }
+  });
 
   // Wait for process to exit
-  const exitCode = await proc.exited;
+  const exitCode = await new Promise<number>((resolve) => {
+    proc.on("close", (code) => resolve(code ?? 1));
+  });
 
   // Parse JUnit XML output from file for return value
   let results: TestResult[] = [];
@@ -128,14 +122,11 @@ export async function runTests(
 
   // Try to read and parse JUnit XML from the output file
   try {
-    const junitFile = Bun.file(junitOutfile);
-    if (await junitFile.exists()) {
-      const junitContent = await junitFile.text();
-      if (junitXml.canParse(junitContent)) {
-        const parsed = junitXml.parse(junitContent);
-        results = parsed.results;
-        summary = parsed.summary;
-      }
+    const junitContent = await readFile(junitOutfile, "utf-8");
+    if (junitXml.canParse(junitContent)) {
+      const parsed = junitXml.parse(junitContent);
+      results = parsed.results;
+      summary = parsed.summary;
     }
   } catch {
     // If we can't read the file, fall back to exit code based result

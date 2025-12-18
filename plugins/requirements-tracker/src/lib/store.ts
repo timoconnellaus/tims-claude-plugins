@@ -283,6 +283,16 @@ export async function loadRequirement(
             `scenarios[${i}] "${scenario.name}": gherkin must include Given/When/Then keywords`
           );
         }
+        // Validate optional suggested flag
+        if (
+          scenario.suggested !== undefined &&
+          typeof scenario.suggested !== "boolean"
+        ) {
+          throw new RequirementValidationError(
+            reqPath,
+            `scenarios[${i}] "${scenario.name}": "suggested" must be a boolean if provided`
+          );
+        }
       }
     }
 

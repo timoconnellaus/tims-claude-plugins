@@ -27,4 +27,71 @@ tests:
   - file: plugins/docs-skill/src/__tests__/store.test.ts
     identifier: skips invalid markdown files
     hash: c88915792c965b03a3666e91a6f2c74997ed03f0af0807c80cd158a92458588f
+  - file: plugins/docs-skill/src/__tests__/pull.test.ts
+    identifier: only syncs docs matching configured topic patterns
+    hash: ddd1b2b344a677610076a12d22a245933e2d0bb95f67ab38c018ca5ce74859ed
 status: done
+scenarios:
+  - name: pull_excludes_non_matching_topics
+    gherkin: |-
+      Given a configured .docs folder with topics [nextjs/**]
+      When the user runs docs pull
+      And remote docs include nextjs/routing
+      And react/hooks
+      Then only nextjs/routing is synced to .docs
+  - name: pull_respects_exclusion_patterns
+    gherkin: |-
+      Given a configured .docs folder with topics [nextjs/**, !nextjs/legacy/*]
+      When the user runs docs pull
+      And remote docs include nextjs/routing
+      And nextjs/legacy/old
+      Then only nextjs/routing is synced to .docs
+aiAssessment:
+  sufficient: true
+  notes: "The new integration test verifies the core pull command flow:
+    configuring topic patterns, filtering docs with getIncludedTopics, and
+    writing only matching docs to .docs folder. Combined with existing unit
+    tests for topic-matcher and store, this provides good coverage of the
+    requirement."
+  assessedAt: 2025-12-18T01:58:08.747Z
+  criteria:
+    noBugsInTestCode:
+      result: pass
+      note: Tests are well-structured with proper setup/teardown, proper assertions,
+        no logical bugs
+    sufficientCoverage:
+      result: pass
+      note: New integration test covers the full pull flow with topic pattern
+        filtering, complementing existing unit tests
+    meaningfulAssertions:
+      result: pass
+      note: Assertions verify both inclusion (matching topics synced) and exclusion
+        (non-matching topics not synced) with exact counts
+    correctTestSubject:
+      result: pass
+      note: Integration test directly tests the pull command flow including config
+        reading, topic filtering, and doc writing
+    happyPathCovered:
+      result: pass
+      note: "Happy path covered: configured .docs folder + topic patterns + docs pull
+        = only matching docs synced"
+    edgeCasesAddressed:
+      result: pass
+      note: Tests cover multiple sources, nested paths, and exclusion patterns
+    errorScenariosHandled:
+      result: pass
+      note: Error scenarios like invalid files and missing configs are covered by
+        existing store tests
+    wouldFailIfBroke:
+      result: pass
+      note: If topic filtering logic broke, tests would fail since they verify exact
+        doc counts and topic presence/absence
+  testComments:
+    - file: plugins/docs-skill/src/__tests__/pull.test.ts
+      identifier: only syncs docs matching configured topic patterns
+      comment: "Integration test that verifies the complete pull flow: creates .docs
+        config with topic patterns, simulates available docs from multiple
+        sources, runs pull logic, and verifies only matching docs are written"
+      hasIssue: false
+  suggestedTests: []
+  suggestedScenarios: []

@@ -12,6 +12,9 @@ import { config } from "./commands/config";
 import { check } from "./commands/check";
 import { pull } from "./commands/pull";
 import { repo } from "./commands/repo";
+import { list } from "./commands/list";
+import { show } from "./commands/show";
+import { injectClaude } from "./commands/inject-claude";
 
 const HELP = `
 docs - Documentation management for AI agents
@@ -29,6 +32,10 @@ USER COMMANDS:
   config [--add | --remove]     View or modify topic patterns
   check                         Validate config against available docs
   pull [--force]                Sync configured docs to .docs/ folder
+  list [path]                   Browse synced docs progressively
+  show <topic>                  Display full content of a doc
+  inject-claude                 Update CLAUDE.md with synced docs info
+  ui [--port <number>]          Start web UI for managing docs
 
 REPOSITORY COMMANDS:
   repo add <path>               Register a docs repository
@@ -53,6 +60,14 @@ EXAMPLES:
   docs config --remove "react/**"
   docs check
   docs pull
+
+  # Browse synced docs
+  docs list                    # Show all categories
+  docs list nextjs             # Drill into nextjs
+  docs show nextjs/routing     # View a specific doc
+  docs inject-claude           # Update CLAUDE.md
+
+  docs ui                      # Start web UI on port 3000
 
   # Repository management
   docs repo add ~/projects/my-docs
@@ -203,6 +218,77 @@ EXAMPLES:
   docs repo remove ~/projects/my-framework
 `.trim();
 
+const UI_HELP = `
+docs ui - Start web UI for managing docs
+
+USAGE:
+  docs ui [--port <number>]
+
+OPTIONS:
+  --port <number>  Port number (default: 3000)
+
+DESCRIPTION:
+  Starts a web-based UI for managing documentation repositories,
+  selecting topics to include, and viewing synced docs.
+
+EXAMPLES:
+  docs ui            # Start on port 3000
+  docs ui --port 8080
+`.trim();
+
+const LIST_HELP = `
+docs list - Browse synced documentation progressively
+
+USAGE:
+  docs list [path]
+
+ARGUMENTS:
+  [path]  Optional path to drill into (e.g., "nextjs", "nextjs/routing")
+          If not provided, shows top-level categories
+
+DESCRIPTION:
+  Progressively explore synced documentation. Start with no arguments
+  to see categories, then drill down by specifying paths.
+
+EXAMPLES:
+  docs list                    # Show all categories
+  docs list nextjs             # Show contents of nextjs/
+  docs list nextjs/api         # Show contents of nextjs/api/
+`.trim();
+
+const SHOW_HELP = `
+docs show - Display full content of a documentation topic
+
+USAGE:
+  docs show <topic>
+
+ARGUMENTS:
+  <topic>  The topic to display (e.g., "nextjs/routing")
+
+DESCRIPTION:
+  Shows the full content of a synced documentation file,
+  including metadata and markdown content.
+
+EXAMPLES:
+  docs show nextjs/routing
+  docs show tanstack-db/getting-started
+`.trim();
+
+const INJECT_CLAUDE_HELP = `
+docs inject-claude - Update CLAUDE.md with synced docs info
+
+USAGE:
+  docs inject-claude
+
+DESCRIPTION:
+  Injects or updates a section in CLAUDE.md that lists synced
+  documentation libraries and usage instructions. The section
+  is wrapped in <docs-skill-synced> tags for future updates.
+
+EXAMPLES:
+  docs inject-claude
+`.trim();
+
 function parseArgs(args: string[]): Record<string, string | boolean | string[]> {
   const result: Record<string, string | boolean | string[]> = {};
   const positional: string[] = [];
@@ -330,6 +416,39 @@ async function main() {
         break;
       }
 
+      case "list": {
+        if (parsed.help || parsed.h) {
+          console.log(LIST_HELP);
+          process.exit(0);
+        }
+        await list({ cwd, path: commandArgs[0] });
+        break;
+      }
+
+      case "show": {
+        if (parsed.help || parsed.h) {
+          console.log(SHOW_HELP);
+          process.exit(0);
+        }
+        const topic = commandArgs.join("/");
+        if (!topic) {
+          console.error("Error: topic is required");
+          console.log(SHOW_HELP);
+          process.exit(1);
+        }
+        await show({ cwd, topic });
+        break;
+      }
+
+      case "inject-claude": {
+        if (parsed.help || parsed.h) {
+          console.log(INJECT_CLAUDE_HELP);
+          process.exit(0);
+        }
+        await injectClaude({ cwd });
+        break;
+      }
+
       case "repo": {
         if (parsed.help || parsed.h) {
           console.log(REPO_HELP);
@@ -346,6 +465,17 @@ async function main() {
           path: commandArgs[1],
           docsPath: typeof parsed["docs-path"] === "string" ? parsed["docs-path"] : undefined,
         });
+        break;
+      }
+
+      case "ui": {
+        if (parsed.help || parsed.h) {
+          console.log(UI_HELP);
+          process.exit(0);
+        }
+        const { ui } = await import("./commands/ui");
+        const port = typeof parsed.port === "string" ? parseInt(parsed.port, 10) : 3000;
+        await ui({ cwd, port });
         break;
       }
 

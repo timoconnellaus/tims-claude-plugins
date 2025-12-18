@@ -1,16 +1,28 @@
-import { createRoot } from "react-dom/client";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Dashboard } from "./components/Dashboard";
-import { RequirementTree } from "./components/RequirementTree";
-import { RequirementDetail } from "./components/RequirementDetail";
-import { DocsViewer } from "./components/DocsViewer";
-import { ClaudeChat, type ClaudeChatHandle } from "./chat";
-import { useUrlState } from "./hooks/useUrlState";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { Dashboard, type FilterType } from "../../components/Dashboard";
+import { RequirementTree } from "../../components/RequirementTree";
+import { RequirementDetail } from "../../components/RequirementDetail";
+import { DocsViewer } from "../../components/DocsViewer";
+import { ClaudeChat, type ClaudeChatHandle } from "../../chat";
 import type {
   GroupWithData,
   RequirementWithData,
-} from "./components/RequirementList";
-import type { CheckSummary, ExtractedTest } from "../lib/types";
+} from "../../components/RequirementList";
+import type { CheckSummary, ExtractedTest } from "../../../lib/types";
+
+// Search params schema using TanStack Router's approach
+const searchSchema = z.object({
+  req: z.string().optional(),
+  expanded: fallback(z.string(), "").default(""),
+  filter: fallback(z.enum(["all", "planned", "done", "untested", "verified", "unverified", "stale"]), "all").default("all"),
+  view: fallback(z.enum(["requirements", "docs"]), "requirements").default("requirements"),
+  doc: fallback(z.string(), "index").default("index"),
+});
+
+type SearchParams = z.infer<typeof searchSchema>;
 
 interface ApiData {
   requirements: GroupWithData[];
@@ -20,7 +32,12 @@ interface ApiData {
 
 type ApiResponse = ApiData | { error: string };
 
-function App() {
+export const Route = createFileRoute("/")({
+  validateSearch: zodValidator(searchSchema),
+  component: Home,
+});
+
+function Home() {
   const [data, setData] = useState<ApiData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,10 +47,51 @@ function App() {
   const [runningTests, setRunningTests] = useState<Set<string>>(new Set());
   const [runningAllTests, setRunningAllTests] = useState(false);
 
-  // URL-based state management
-  const [urlState, urlSetters] = useUrlState();
-  const { req: selectedReqId, filter, view, doc: docsPage, expanded } = urlState;
-  const { setReq: setSelectedReqId, setFilter, setView, setDoc: setDocsPage, setExpanded, toggleExpanded } = urlSetters;
+  // TanStack Router search params
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  // Parse expanded from comma-separated string to Set
+  const expanded = useMemo(
+    () => new Set<string>(search.expanded ? search.expanded.split(",").filter(Boolean) : []),
+    [search.expanded]
+  );
+
+  const selectedReqId = search.req ?? null;
+  const filter = search.filter as FilterType;
+  const view = search.view;
+  const docsPage = search.doc;
+
+  // Navigation helpers
+  const setSelectedReqId = useCallback((req: string | null) => {
+    navigate({ search: (prev) => ({ ...prev, req: req ?? undefined }) });
+  }, [navigate]);
+
+  const setFilter = useCallback((newFilter: FilterType) => {
+    navigate({ search: (prev) => ({ ...prev, filter: newFilter }) });
+  }, [navigate]);
+
+  const setView = useCallback((newView: "requirements" | "docs") => {
+    navigate({ search: (prev) => ({ ...prev, view: newView }) });
+  }, [navigate]);
+
+  const setDocsPage = useCallback((newDoc: string) => {
+    navigate({ search: (prev) => ({ ...prev, doc: newDoc }) });
+  }, [navigate]);
+
+  const setExpanded = useCallback((newExpanded: Set<string>) => {
+    navigate({ search: (prev) => ({ ...prev, expanded: Array.from(newExpanded).join(",") }) });
+  }, [navigate]);
+
+  const toggleExpanded = useCallback((path: string) => {
+    const next = new Set(expanded);
+    if (next.has(path)) {
+      next.delete(path);
+    } else {
+      next.add(path);
+    }
+    navigate({ search: (prev) => ({ ...prev, expanded: Array.from(next).join(",") }) });
+  }, [expanded, navigate]);
 
   const chatRef = useRef<ClaudeChatHandle>(null);
 
@@ -183,7 +241,9 @@ ${testList}
    - **hasIssue: false** if the test is correct and useful
    - A comment explaining why
 
-4. Run the assess command with your evaluation:
+4. Look for test behaviors not documented in the requirement's scenarios. If tests cover edge cases or behaviors not in the gherkin or scenarios array, suggest them as new scenarios.
+
+5. Run the assess command with your evaluation:
 
 \`\`\`bash
 req assess ${req.id} --result '{
@@ -199,11 +259,12 @@ req assess ${req.id} --result '{
   },
   "notes": "Summary of your assessment",
   "testComments": [{"file": "path/to/test.ts", "identifier": "test name", "comment": "why this test is good/bad", "hasIssue": true|false}],
-  "suggestedTests": [{"description": "...", "rationale": "..."}]
+  "suggestedTests": [{"description": "...", "rationale": "..."}],
+  "suggestedScenarios": [{"name": "scenario_name", "gherkin": "Given...When...Then...", "rationale": "why this should be documented"}]
 }'
 \`\`\`
 
-Note: testComments are required for each linked test. suggestedTests is optional.`;
+Note: testComments are required for each linked test. suggestedTests and suggestedScenarios are optional - include them when gaps are found.`;
 
     // Small delay to ensure chat is rendered before sending
     setTimeout(() => {
@@ -411,6 +472,80 @@ req assess ${req.id} --result '{...}'
     }, 100);
   }, []);
 
+  // Handle accepting a suggested scenario from AI assessment (adds it directly)
+  const handleAddScenario = useCallback(async (req: RequirementWithData, suggestedScenario: { name: string; gherkin: string; rationale: string }) => {
+    try {
+      const body = {
+        path: req.id,
+        name: suggestedScenario.name,
+        gherkin: suggestedScenario.gherkin,
+      };
+      const response = await fetch('/api/add-scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        console.error('Failed to add scenario:', result.error);
+      }
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('[handleAddScenario] Error:', err);
+    }
+  }, []);
+
+  // Handle accepting a suggested scenario
+  const handleAcceptScenario = useCallback((req: RequirementWithData, scenarioName: string) => {
+    setShowChat(true);
+
+    const prompt = `Accept the suggested scenario "${scenarioName}" for requirement **${req.id}**:
+
+\`\`\`bash
+req accept-scenario ${req.id} ${scenarioName}
+\`\`\``;
+
+    setTimeout(() => {
+      chatRef.current?.sendMessage(prompt);
+    }, 100);
+  }, []);
+
+  // Handle rejecting a pending scenario (already added with suggested: true)
+  const handleRejectScenario = useCallback((req: RequirementWithData, scenarioName: string) => {
+    setShowChat(true);
+
+    const prompt = `Reject the suggested scenario "${scenarioName}" for requirement **${req.id}**:
+
+\`\`\`bash
+req reject-scenario ${req.id} ${scenarioName}
+\`\`\``;
+
+    setTimeout(() => {
+      chatRef.current?.sendMessage(prompt);
+    }, 100);
+  }, []);
+
+  // Handle rejecting an AI suggested scenario (from assessment, not yet added)
+  const handleRejectSuggestedScenario = useCallback(async (req: RequirementWithData, suggestedScenario: { name: string; gherkin: string; rationale: string }) => {
+    try {
+      const response = await fetch('/api/reject-suggested-scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: req.id,
+          name: suggestedScenario.name,
+        }),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        console.error('Failed to reject suggested scenario:', result.error);
+      }
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('Failed to reject suggested scenario:', err);
+    }
+  }, []);
+
   const filteredCount = filteredGroups.reduce(
     (acc, g) => acc + g.requirements.length,
     0
@@ -605,6 +740,10 @@ req assess ${req.id} --result '{...}'
                 onVerify={handleVerifyRequirement}
                 onFixTest={handleFixTest}
                 onAddTest={handleAddTest}
+                onAddScenario={handleAddScenario}
+                onAcceptScenario={handleAcceptScenario}
+                onRejectScenario={handleRejectScenario}
+                onRejectSuggestedScenario={handleRejectSuggestedScenario}
                 onRunTest={handleRunTest}
                 onRunAllTests={handleRunAllTests}
                 runningTests={runningTests}
@@ -629,15 +768,4 @@ req assess ${req.id} --result '{...}'
       )}
     </div>
   );
-}
-
-// Mount the app
-const root = document.getElementById("root");
-if (root) {
-  createRoot(root).render(<App />);
-}
-
-// Accept hot module updates
-if (import.meta.hot) {
-  import.meta.hot.accept();
 }
