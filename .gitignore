@@ -4,3 +4,7 @@ node_modules/
 .DS_Store
 .claude/
 .env
+
+# Build artifacts
+dist/
+**/build-constants.ts

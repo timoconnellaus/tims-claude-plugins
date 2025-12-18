@@ -7,6 +7,22 @@ description: Track project requirements with test coverage verification. Use whe
 
 A local YAML-based system for tracking project requirements with test coverage verification.
 
+## Installation
+
+If the `req` command is not available, install it with:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/timoconnellaus/tims-claude-plugins/main/scripts/install.sh | bash
+```
+
+This installs the `req` CLI to `~/.local/bin`. Make sure this directory is in your PATH.
+
+To update to the latest version:
+
+```bash
+req upgrade
+```
+
 ## Folder Structure
 
 Requirements live in `.requirements/` at the project root with a folder-based structure:

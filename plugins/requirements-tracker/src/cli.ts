@@ -16,9 +16,10 @@ import { run } from "./commands/run";
 import { addScenario } from "./commands/add-scenario";
 import { acceptScenario } from "./commands/accept-scenario";
 import { rejectScenario } from "./commands/reject-scenario";
+import { getCurrentVersion, selfUpdate } from "./lib/updater";
 
 const HELP = `
-req - Track requirements with test coverage
+req - Track requirements with test coverage (v${getCurrentVersion()})
 
 USAGE:
   req <command> [options]
@@ -42,6 +43,8 @@ COMMANDS:
   reject-scenario <path> <name>                     Reject a suggested scenario
   ui [--port <number>]                              Start web UI for viewing requirements
   docs [--port <number>]                            Open documentation in browser
+  version                                           Show version information
+  upgrade                                           Update to latest version
 
 GLOBAL OPTIONS:
   --cwd <path>  Run in specified directory (default: current directory)
@@ -696,6 +699,15 @@ EXAMPLES:
           port: args.port ? parseInt(args.port as string, 10) : 3000,
         });
         break;
+
+      case "version":
+        console.log(`req v${getCurrentVersion()}`);
+        break;
+
+      case "upgrade": {
+        const success = await selfUpdate();
+        process.exit(success ? 0 : 1);
+      }
 
       default:
         console.error(`Unknown command: ${command}`);

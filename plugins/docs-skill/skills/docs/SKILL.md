@@ -7,6 +7,26 @@ description: Manage AI-ready documentation for projects. Use when setting up doc
 
 A skill for managing AI-ready documentation. This skill helps you:
 
+## Installation
+
+If the `docs` command is not available, install it with:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/timoconnellaus/tims-claude-plugins/main/scripts/install.sh | bash
+```
+
+This installs the `docs` CLI to `~/.local/bin`. Make sure this directory is in your PATH.
+
+To update to the latest version:
+
+```bash
+docs upgrade
+```
+
+## Overview
+
+This skill helps you:
+
 1. **Set up docs** in a project with `docs init`
 2. **Search** available documentation with `docs search`
 3. **Configure** which docs you want with `docs config`

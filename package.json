@@ -1,1 +1,16 @@
-{"dependencies": {}}
+{
+  "name": "tims-claude-skills",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "version:bump": "bun run scripts/bump-version.ts",
+    "version:bump:minor": "bun run scripts/bump-version.ts --minor",
+    "version:bump:major": "bun run scripts/bump-version.ts --major",
+    "build": "bun run scripts/build.ts"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  },
+  "dependencies": {}
+}

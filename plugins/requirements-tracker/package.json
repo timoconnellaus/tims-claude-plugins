@@ -1,6 +1,6 @@
 {
   "name": "requirements-tracker",
-  "version": "4.2.0",
+  "version": "4.2.2",
   "type": "module",
   "bin": {
     "req": "./src/cli.ts"
@@ -29,6 +29,7 @@
     "fast-xml-parser": "^5.3.3",
     "glob": "^11.0.0",
     "lucide-react": "^0.559.0",
+    "nitro": "^3.0.1-alpha.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",

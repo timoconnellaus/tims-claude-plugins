@@ -15,9 +15,10 @@ import { repo } from "./commands/repo";
 import { list } from "./commands/list";
 import { show } from "./commands/show";
 import { injectClaude } from "./commands/inject-claude";
+import { getCurrentVersion, selfUpdate } from "./lib/updater";
 
 const HELP = `
-docs - Documentation management for AI agents
+docs - Documentation management for AI agents (v${getCurrentVersion()})
 
 USAGE:
   docs <command> [options]
@@ -41,6 +42,10 @@ REPOSITORY COMMANDS:
   repo add <path>               Register a docs repository
   repo list                     List registered repositories
   repo remove <path>            Remove a repository
+
+VERSION COMMANDS:
+  version                       Show version information
+  upgrade                       Update to latest version
 
 GLOBAL OPTIONS:
   --cwd <path>  Run in specified directory (default: current directory)
@@ -477,6 +482,15 @@ async function main() {
         const port = typeof parsed.port === "string" ? parseInt(parsed.port, 10) : 3000;
         await ui({ cwd, port });
         break;
+      }
+
+      case "version":
+        console.log(`docs v${getCurrentVersion()}`);
+        break;
+
+      case "upgrade": {
+        const success = await selfUpdate();
+        process.exit(success ? 0 : 1);
       }
 
       default:

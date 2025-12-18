@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Auto-bump patch version on every commit
+# Skip with: git commit --no-verify
+
+echo "Auto-bumping version..."
+bun run scripts/bump-version.ts
+
+# Stage the updated version files
+git add plugins/requirements-tracker/package.json
+git add plugins/docs-skill/package.json
+git add .claude-plugin/marketplace.json
+
+echo "Version bumped and staged."
