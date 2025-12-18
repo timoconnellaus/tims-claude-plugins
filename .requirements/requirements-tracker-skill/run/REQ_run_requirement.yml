@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a requirement path
+  When the user runs 'req run <requirement-path>'
+  Then all tests linked to that requirement are executed
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

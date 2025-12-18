@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a requirement with dependencies on other requirements
+  When dependencies are declared
+  Then blocking dependencies must be 'done' before implementation
+  And check reports blocked requirements count
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,10 @@
+gherkin: |-
+  Given an existing requirement file
+  When the user runs 'req move <source> <dest>'
+  Then the requirement file is moved to the new path
+  And any parent directories are created if needed
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

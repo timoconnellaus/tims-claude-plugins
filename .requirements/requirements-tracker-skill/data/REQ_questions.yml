@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a requirement with clarification questions
+  When questions are added
+  Then they can have optional answers with timestamps
+  And check reports unanswered questions count
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

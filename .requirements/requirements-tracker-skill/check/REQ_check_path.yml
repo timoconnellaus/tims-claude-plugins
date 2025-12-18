@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a project with requirements in multiple folders
+  When the user runs 'req check <path>'
+  Then only requirements under that path are checked
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

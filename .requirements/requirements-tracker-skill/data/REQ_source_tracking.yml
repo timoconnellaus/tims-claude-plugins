@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a requirement
+  When the source is specified
+  Then it includes type (doc, slack, email, meeting, ticket, manual)
+  And includes description, optional URL,
+  And optional date
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

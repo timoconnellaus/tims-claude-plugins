@@ -1,0 +1,12 @@
+gherkin: |-
+  Given an initialized requirements project
+  When the user runs 'req add <path> --gherkin "..." --source-type <type>'
+  Then a new REQ_*.yml file is created at the specified path
+  And the file contains the Gherkin specification
+  And the source type
+  And description are recorded
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

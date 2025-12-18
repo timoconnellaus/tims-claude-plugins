@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a project without requirements tracking
+  When the user runs 'req init'
+  Then a .requirements/ directory is created
+  And a config.yml file is created with testRunner
+  And testGlob settings
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a specific test identifier
+  When the user runs 'req run <file:identifier>'
+  Then only that specific test is executed
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

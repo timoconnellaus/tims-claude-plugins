@@ -1,0 +1,11 @@
+gherkin: |-
+  Given tests that are not linked to any requirement
+  When the user runs 'req check'
+  Then orphaned tests are identified
+  And listed
+  And ignored tests are excluded from orphaned count
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

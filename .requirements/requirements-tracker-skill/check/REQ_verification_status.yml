@@ -1,0 +1,14 @@
+gherkin: |-
+  Given a requirement with linked tests
+  When the verification status is computed
+  Then 'unverified' means tests exist
+  But no AI assessment
+  And 'verified' means AI assessed
+  And tests unchanged
+  And 'stale' means AI assessed
+  But tests changed since
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

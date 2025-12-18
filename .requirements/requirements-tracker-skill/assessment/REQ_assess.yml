@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a requirement with linked tests
+  When AI runs 'req assess <path> --result {...}'
+  Then the assessment is stored on the requirement
+  And includes sufficient flag, notes,
+  And timestamp
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

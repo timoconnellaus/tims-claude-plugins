@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a test that intentionally has no requirement
+  When the user runs 'req ignore-test <file:id> --reason "..."'
+  Then the test is added to the ignored tests list
+  And it will not appear as an orphaned test in checks
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

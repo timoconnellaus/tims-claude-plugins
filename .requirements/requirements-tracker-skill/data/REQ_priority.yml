@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a requirement
+  When priority is set
+  Then it can be critical, high, medium, or low
+  And check summary shows priority breakdown
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,11 @@
+gherkin: |-
+  Given an existing requirement
+  When the user runs 'req add-scenario <path> --name "..." --gherkin "..."'
+  Then a new scenario is added to the requirement's scenarios array
+  And the scenario has a name
+  And Gherkin description
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

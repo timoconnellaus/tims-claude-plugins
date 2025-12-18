@@ -81,7 +81,7 @@ tests:
     hash: b27d44d5d291ea5f103d6e286fff9774c4260ea5acc5dc1368e887167540c065
   - file: plugins/docs-skill/src/__tests__/validator.test.ts
     identifier: reports invalid YAML
-    hash: 812214ca639f6ac029f5acd4f5e3b2d90d4573b007328f1a00166887104afa20
+    hash: f056d22e4ca8b46218f0a5cdb15917a0fbfba74fd8630202983948c68e99da94
   - file: plugins/docs-skill/src/__tests__/validator.test.ts
     identifier: validates content after parsing frontmatter
     hash: 540ca982707738b63b37a61f65c1ba07af6f7f020ea7c2c19c6ee761e96ee152

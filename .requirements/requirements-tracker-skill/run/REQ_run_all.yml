@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a configured test runner
+  When the user runs 'req run'
+  Then all tests in the project are executed using the configured testRunner
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

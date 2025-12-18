@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a requirement with Gherkin specification
+  When the format is validated during check
+  Then malformed Gherkin is reported as a format issue
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

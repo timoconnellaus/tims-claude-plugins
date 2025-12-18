@@ -1,0 +1,11 @@
+gherkin: |-
+  Given test files in the project
+  When the test cache is built
+  Then file mtimes
+  And test hashes are stored
+  And subsequent checks use cached data for unchanged files
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,10 @@
+gherkin: |-
+  Given an AI assessment that suggests additional scenarios
+  When suggested scenarios are stored
+  Then they are marked with 'suggested: true' flag
+  And await user acceptance or rejection
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

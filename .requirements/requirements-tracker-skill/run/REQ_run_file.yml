@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a test file path
+  When the user runs 'req run <file>'
+  Then only tests in that file are executed
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

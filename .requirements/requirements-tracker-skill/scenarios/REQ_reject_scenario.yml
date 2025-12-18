@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a requirement with a suggested scenario
+  When the user runs 'req reject-scenario <path> <name>'
+  Then the suggested scenario is removed from the requirement
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a requirement with a suggested scenario
+  When the user runs 'req accept-scenario <path> <name>'
+  Then the suggested flag is removed from the scenario
+  And the scenario becomes a permanent part of the requirement
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

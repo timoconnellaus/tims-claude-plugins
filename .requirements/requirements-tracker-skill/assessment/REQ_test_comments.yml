@@ -1,0 +1,11 @@
+gherkin: |-
+  Given an AI assessment
+  When per-test issues are found
+  Then testComments array stores feedback for each problematic test
+  And includes file, identifier, comment,
+  And hasIssue flag
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2025-12-18T02:15:00.416Z",
+  "generatedAt": "2025-12-18T22:41:32.797Z",
   "fileMtimes": {
     "plugins/docs-skill/src/__tests__/validator.test.ts": 1766024100243.042,
     "plugins/docs-skill/src/__tests__/topic-matcher.test.ts": 1766011832201.0315,

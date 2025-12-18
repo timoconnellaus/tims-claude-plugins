@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a project with requirements
+  When the user runs 'req check --json'
+  Then the full check results are output as JSON
+  And include per-requirement details
+  And summary
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,10 @@
+gherkin: |-
+  Given an existing requirement file
+  When the user runs 'req rename <path> <new-name>'
+  Then the requirement file is renamed within its directory
+  And the new name follows REQ_*.yml pattern
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

@@ -1,0 +1,11 @@
+gherkin: |-
+  Given an AI assessment with coverage gaps
+  When additional tests are needed
+  Then suggestedTests array contains descriptions
+  And rationales
+  And suggestedScenarios array contains Gherkin scenarios to add
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

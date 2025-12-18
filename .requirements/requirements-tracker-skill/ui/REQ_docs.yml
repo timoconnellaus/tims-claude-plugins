@@ -1,0 +1,9 @@
+gherkin: |-
+  Given the requirements tracker tool
+  When the user runs 'req docs'
+  Then documentation opens in the default browser
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

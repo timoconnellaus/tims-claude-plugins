@@ -1,0 +1,11 @@
+gherkin: |-
+  Given an existing requirement
+  And a test file with test functions
+  When the user runs 'req link <path> <file:identifier>'
+  Then the test is linked to the requirement
+  And the test body hash is stored for change detection
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

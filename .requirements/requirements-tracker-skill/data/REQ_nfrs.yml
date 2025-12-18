@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a requirement with non-functional requirements
+  When NFRs are defined
+  Then they have category, description, optional threshold,
+  And verified flag
+  And check reports unverified NFRs count
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

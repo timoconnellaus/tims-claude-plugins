@@ -1,0 +1,11 @@
+gherkin: |-
+  Given a test results file in junit-xml or bun-json format
+  When the user runs 'req import-results <file>'
+  Then the results are parsed
+  And stored
+  And test pass/fail status is available for analysis
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

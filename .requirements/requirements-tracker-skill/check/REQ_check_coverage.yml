@@ -1,0 +1,12 @@
+gherkin: |-
+  Given a project with requirements
+  And tests
+  When the user runs 'req check'
+  Then a summary is displayed showing tested vs untested requirements
+  And verified vs unverified vs stale requirements
+  And orphaned tests count
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

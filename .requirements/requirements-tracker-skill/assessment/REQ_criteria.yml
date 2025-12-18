@@ -1,0 +1,15 @@
+gherkin: >-
+  Given an AI assessment
+
+  When the criteria are evaluated
+
+  Then 8 criteria are checked: noBugsInTestCode, sufficientCoverage,
+  meaningfulAssertions, correctTestSubject, happyPathCovered,
+  edgeCasesAddressed, errorScenariosHandled, wouldFailIfBroke
+
+  And each criterion has pass, fail, or n/a result
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

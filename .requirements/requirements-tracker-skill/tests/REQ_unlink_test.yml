@@ -1,0 +1,9 @@
+gherkin: |-
+  Given a requirement with linked tests
+  When the user runs 'req unlink <path> <file:identifier>'
+  Then the test link is removed from the requirement
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

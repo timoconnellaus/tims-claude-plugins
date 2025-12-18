@@ -1,0 +1,11 @@
+gherkin: |-
+  Given an initialized requirements project
+  When the user runs 'req ui'
+  Then a web UI server starts on a local port
+  And requirements can be browsed
+  And viewed in a web interface
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned

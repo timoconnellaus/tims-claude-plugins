@@ -1,0 +1,10 @@
+gherkin: |-
+  Given a linked test
+  When the test function body changes
+  Then the stored hash becomes stale
+  And the verification status changes to 'stale'
+source:
+  type: manual
+  description: Self-documented requirements
+tests: []
+status: planned
