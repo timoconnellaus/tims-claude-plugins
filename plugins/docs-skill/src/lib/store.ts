@@ -77,12 +77,12 @@ export function createDefaultConfig(): UserConfig {
 // ============================================
 
 /**
- * Get the path to the plugin's docs directory
+ * Get the path to the docs directory (repo root docs/)
  */
 export function getPluginDocsDir(): string {
-  // Get the directory containing this file, then go up to plugin root
+  // Get the directory containing this file, then go up to repo root
   const libDir = import.meta.dir;
-  return join(libDir, "..", "..", "docs");
+  return join(libDir, "..", "..", "..", "..", "docs");
 }
 
 /**

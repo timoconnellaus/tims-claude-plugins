@@ -1,0 +1,37 @@
+---
+topic: tanstack-query/framework/vue/guides/default-query-function
+title: Default Query Function
+description: "[//]: # 'Example'"
+version: latest
+sourceUrl: https://github.com/tanstack/query/blob/main/docs/framework/vue/guides/default-query-function.md
+tags:
+  - tanstack-query
+  - framework
+---
+
+[//]: # 'Example'
+
+```tsx
+// Define a default query function that will receive the query key
+const defaultQueryFn = async ({ queryKey }) => {
+  const { data } = await axios.get(
+    `https://jsonplaceholder.typicode.com${queryKey[0]}`,
+  )
+  return data
+}
+
+// provide the default query function to your app with defaultOptions
+const vueQueryPluginOptions: VueQueryPluginOptions = {
+  queryClientConfig: {
+    defaultOptions: { queries: { queryFn: defaultQueryFn } },
+  },
+}
+app.use(VueQueryPlugin, vueQueryPluginOptions)
+
+// All you have to do now is pass a key!
+const { status, data, error, isFetching } = useQuery({
+  queryKey: [`/posts/${postId}`],
+})
+```
+
+[//]: # 'Example'
