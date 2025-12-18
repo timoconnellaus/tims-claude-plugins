@@ -11,6 +11,7 @@ import { search } from "./commands/search";
 import { config } from "./commands/config";
 import { check } from "./commands/check";
 import { pull } from "./commands/pull";
+import { repo } from "./commands/repo";
 
 const HELP = `
 docs - Documentation management for AI agents
@@ -28,6 +29,11 @@ USER COMMANDS:
   config [--add | --remove]     View or modify topic patterns
   check                         Validate config against available docs
   pull [--force]                Sync configured docs to .docs/ folder
+
+REPOSITORY COMMANDS:
+  repo add <path>               Register a docs repository
+  repo list                     List registered repositories
+  repo remove <path>            Remove a repository
 
 GLOBAL OPTIONS:
   --cwd <path>  Run in specified directory (default: current directory)
@@ -47,6 +53,11 @@ EXAMPLES:
   docs config --remove "react/**"
   docs check
   docs pull
+
+  # Repository management
+  docs repo add ~/projects/my-docs
+  docs repo list
+  docs repo remove ~/projects/my-docs
 
 Run 'docs <command> --help' for more information on a command.
 `.trim();
@@ -167,6 +178,29 @@ DESCRIPTION:
 EXAMPLES:
   docs pull          # Sync matching docs
   docs pull --force  # Overwrite existing files
+`.trim();
+
+const REPO_HELP = `
+docs repo - Manage documentation repositories
+
+USAGE:
+  docs repo add <path>          Register a new repository
+  docs repo list                List all registered repositories
+  docs repo remove <path>       Remove a repository
+
+ARGUMENTS:
+  <path>  Local filesystem path or GitHub repository URL
+          Examples: /path/to/repo, ./relative/path, https://github.com/owner/repo
+
+OPTIONS:
+  --docs-path <dir>  Subdirectory containing docs (default: "docs/")
+
+EXAMPLES:
+  docs repo add ~/projects/my-framework
+  docs repo add https://github.com/owner/docs-repo
+  docs repo add ./local-docs --docs-path content/
+  docs repo list
+  docs repo remove ~/projects/my-framework
 `.trim();
 
 function parseArgs(args: string[]): Record<string, string | boolean | string[]> {
@@ -293,6 +327,25 @@ async function main() {
           process.exit(0);
         }
         await pull({ cwd, force: Boolean(parsed.force) });
+        break;
+      }
+
+      case "repo": {
+        if (parsed.help || parsed.h) {
+          console.log(REPO_HELP);
+          process.exit(0);
+        }
+        const subcommand = commandArgs[0] as "add" | "list" | "remove";
+        if (!subcommand || !["add", "list", "remove"].includes(subcommand)) {
+          console.error("Usage: docs repo <add|list|remove> [path]");
+          process.exit(1);
+        }
+        await repo({
+          cwd,
+          subcommand,
+          path: commandArgs[1],
+          docsPath: typeof parsed["docs-path"] === "string" ? parsed["docs-path"] : undefined,
+        });
         break;
       }
 

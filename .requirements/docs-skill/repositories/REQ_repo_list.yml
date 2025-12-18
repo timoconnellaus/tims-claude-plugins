@@ -1,0 +1,18 @@
+gherkin: |-
+  Given a user has registered repositories
+  When they run docs repo list
+  Then all registered repositories are displayed
+source:
+  type: manual
+  description: Initial design for docs repositories feature
+tests:
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns docs/ subdirectory for local repo by default
+    hash: 0796a7f5fa46c76ff3439851cf9ce04e4558543e986a63b10668bf6bcbb17f03
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: uses custom docsPath if provided
+    hash: 8b8d57f97654732abd3168a954c5aee97610111c85a130fde18a502feaab4d34
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns cached path for github repos
+    hash: eec57eb1977ed7151b4273be283e2a97190ae51d674d55595bc3750ef021ded4
+status: done

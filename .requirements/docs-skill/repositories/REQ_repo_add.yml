@@ -1,0 +1,39 @@
+gherkin: |-
+  Given a user has a local docs folder or GitHub repo
+  When they run docs repo add <path>
+  Then the repository is registered
+source:
+  type: manual
+  description: Initial design for docs repositories feature
+tests:
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: normalizes GitHub HTTPS URL
+    hash: 88eaac58022556a49bdcda04bec713e7b533194b83fb7952d64e31f2be655de3
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: normalizes GitHub SSH URL
+    hash: dd773f5e56423b66a8fe79806333eb23c713b26655cf3fcb5aa2aa3e9e1e28b0
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: resolves relative paths to absolute
+    hash: 80e033ddb51decbecb96b744be3069cc98938cb072ec079e368bf3d4bc877103
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns github for GitHub HTTPS URLs
+    hash: d71fa992b1205c4bec35e9e53ac57d6b8b061e1467e8afd908771b60c9f00e96
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns local for absolute filesystem paths
+    hash: 4f35d8173d46a39ee35518e485608895e6ec727a0704808e150982b3866bf106
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: normalizes GitHub URL with .git suffix
+    hash: 31dc4f420bd5ba9e0e973441d66f945ce6e048d8bb5627b602462f5b69cda360
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: handles paths with trailing slashes
+    hash: 4769ec00d932e0d88d34d290ccf063bad0252ee7ac4047daa63a9b11f9cab768
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns github for GitHub SSH URLs
+    hash: 13b3c407a115bcd2d8003bad3bc22c5bcec58070925880286da629abf0dfd6ae
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: "returns github for normalized github: IDs"
+    hash: 0584f76108487b43a26a3ac7c0777c037418c4ef1916dffef0ee5d197bca3453
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns local for relative filesystem paths
+    hash: d46cf182e307d7c58fc08f369e73e5934611e76d50702e2b6e203803b19da18a
+status: done

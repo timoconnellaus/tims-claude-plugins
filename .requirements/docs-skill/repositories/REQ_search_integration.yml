@@ -1,0 +1,27 @@
+gherkin: |-
+  Given a user has registered repositories with docs
+  When they run docs search <query>
+  Then docs from registered repositories are included in results
+source:
+  type: manual
+  description: Initial design for docs repositories feature
+tests:
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: loads docs from local repository
+    hash: 334f4d5f71ecdfd3e255c379860f6fb6f9aad9ea62eedb41f590f3e875643b24
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: respects custom docsPath
+    hash: bfed3da27c7025af95b25c701ab0bc909c821c6b0203b695940478579a186d3e
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: loads multiple docs from subdirectories
+    hash: eb7225b458cdd0ce8a7d26696811a6f309da6e2fcf1e1e26e85ada1def6c6f48
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: skips files with invalid frontmatter
+    hash: 4bb8ccbd43bd4bb0f9bb1feb4474b03856881d8c201fdd45f00bb789bdc5ca01
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns empty array for github repos (not yet implemented)
+    hash: 7eaeea88e01245f4477c8f2043d31c0ec1f27b5a5bf75c881bf4b31ab5e0f58c
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns empty array if docs directory does not exist
+    hash: fdd5f0851a5563033d4caa34dffa313113c8ec584545e51b9c251a581915c0fd
+status: done

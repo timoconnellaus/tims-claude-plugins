@@ -1,0 +1,21 @@
+gherkin: |-
+  Given a user wants to manage docs repositories
+  When they register or remove a repository
+  Then the data is stored globally at ~/.docs-skill/repositories.yml
+source:
+  type: manual
+  description: Initial design for docs repositories feature
+tests:
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns path in home directory
+    hash: 9f033d76a672607aa7ff1a90b82d481857d9ec16fbd08184c5132aece483fb98
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns path to repositories.yml
+    hash: 25bfbe94474ff9db9c661c01096c4f3abd3ed423238a18444187174067ef446e
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns version 1
+    hash: 97020e8cb4388313f577fb858db5b4e06267a131346f3394c6362f88af8e7b30
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: returns empty repositories array
+    hash: 848380dca2bb83b8cdcaca2eb70e0bc9d24ae41cf88bd6dc3410519ec25051c4
+status: done

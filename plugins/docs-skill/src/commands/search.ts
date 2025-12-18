@@ -4,6 +4,7 @@
 
 import type { SearchArgs, DocSearchResult } from "../lib/types";
 import { loadAllDocs } from "../lib/store";
+import { loadAllRepoDocs } from "../lib/repo-store";
 
 export async function search(args: SearchArgs): Promise<void> {
   const { query } = args;
@@ -11,6 +12,12 @@ export async function search(args: SearchArgs): Promise<void> {
 
   // Load all docs from the plugin
   const allDocs = await loadAllDocs();
+
+  // Also load docs from registered repositories
+  const repoDocs = await loadAllRepoDocs();
+  for (const [repoId, docs] of repoDocs) {
+    allDocs.set(`repo:${repoId}`, docs);
+  }
 
   // Search through docs
   const results: DocSearchResult[] = [];

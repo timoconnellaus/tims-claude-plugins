@@ -1,0 +1,12 @@
+gherkin: |-
+  Given a user has registered a repository
+  When they run docs repo remove <path>
+  Then the repository is removed from the registry
+source:
+  type: manual
+  description: Initial design for docs repositories feature
+tests:
+  - file: plugins/docs-skill/src/__tests__/repo-store.test.ts
+    identifier: normalizes absolute paths
+    hash: f49a1d4725e2a20db3d8e6980e40e5d3414d85f9eb2f5d32fe0e90d7d0a9453a
+status: done

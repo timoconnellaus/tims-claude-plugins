@@ -249,3 +249,51 @@ export interface PullArgs {
   cwd: string;
   force?: boolean;
 }
+
+// ============================================
+// REPOSITORIES (global ~/.docs-skill/repositories.yml)
+// ============================================
+
+export const GLOBAL_CONFIG_DIR = ".docs-skill";
+export const REPOSITORIES_FILE = "repositories.yml";
+
+/**
+ * Repository type - either a local path or GitHub repo
+ */
+export type RepositoryType = "local" | "github";
+
+/**
+ * A registered documentation repository
+ */
+export interface Repository {
+  /** Unique identifier - normalized path or github:owner/repo */
+  id: string;
+  /** Type of repository */
+  type: RepositoryType;
+  /** Full path (local) or GitHub URL */
+  path: string;
+  /** ISO date when added */
+  addedAt: string;
+  /** Optional subdirectory containing docs (defaults to "docs/") */
+  docsPath?: string;
+}
+
+/**
+ * Global repositories file stored at ~/.docs-skill/repositories.yml
+ */
+export interface RepositoriesFile {
+  /** Version of schema */
+  version: 1;
+  /** List of registered repositories */
+  repositories: Repository[];
+}
+
+/**
+ * CLI args for repo commands
+ */
+export interface RepoArgs {
+  cwd: string;
+  subcommand: "add" | "list" | "remove";
+  path?: string;
+  docsPath?: string;
+}
