@@ -60,7 +60,7 @@ download_binary() {
     local url="https://github.com/${REPO}/releases/download/v${version}/${cli}-${platform}"
     local tmp_file="/tmp/${cli}-${platform}-$$"
 
-    info "Downloading ${cli} v${version} for ${platform}..."
+    info "Downloading ${cli} v${version} for ${platform}..." >&2
 
     if command -v curl &> /dev/null; then
         if ! curl -fsSL -o "$tmp_file" "$url" 2>/dev/null; then

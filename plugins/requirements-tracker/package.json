@@ -1,6 +1,6 @@
 {
   "name": "requirements-tracker",
-  "version": "4.2.7",
+  "version": "4.2.8",
   "type": "module",
   "bin": {
     "req": "./src/cli.ts"
