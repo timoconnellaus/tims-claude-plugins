@@ -121,10 +121,10 @@ describe("Link Command", () => {
     expect(data.tests[0].hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("clears aiAssessment when test linked", async () => {
+  it("clears aiAssessment when test linked (no suggested tests)", async () => {
     await setupRequirements();
 
-    // Add existing assessment
+    // Add existing assessment without suggested tests
     const reqPath = join(getRequirementsDir(tempDir), "auth/REQ_login.yml");
     const content = await readFile(reqPath, "utf-8");
     const data = parseYaml(content) as Requirement;
@@ -143,6 +143,37 @@ describe("Link Command", () => {
 
     const updated = parseYaml(await readFile(reqPath, "utf-8")) as Requirement;
     expect(updated.aiAssessment).toBeUndefined();
+  });
+
+  it("preserves suggestedTests when test linked", async () => {
+    await setupRequirements();
+
+    // Add existing assessment WITH suggested tests
+    const reqPath = join(getRequirementsDir(tempDir), "auth/REQ_login.yml");
+    const content = await readFile(reqPath, "utf-8");
+    const data = parseYaml(content) as Requirement;
+    data.aiAssessment = {
+      sufficient: true,
+      notes: "Old assessment",
+      assessedAt: "2024-01-01T00:00:00Z",
+      suggestedTests: [
+        { description: "Test password validation", rationale: "Security" },
+      ],
+    };
+    await writeFile(reqPath, stringifyYaml(data));
+
+    await link({
+      cwd: tempDir,
+      path: "auth/REQ_login.yml",
+      testSpec: "auth.test.ts:validates login",
+    });
+
+    const updated = parseYaml(await readFile(reqPath, "utf-8")) as Requirement;
+    expect(updated.aiAssessment).toBeDefined();
+    expect(updated.aiAssessment?.suggestedTests).toHaveLength(1);
+    expect(updated.aiAssessment?.suggestedTests?.[0].description).toBe("Test password validation");
+    expect(updated.aiAssessment?.sufficient).toBe(false);
+    expect(updated.aiAssessment?.notes).toBe("Assessment invalidated - test coverage changed");
   });
 
   it("prevents duplicate links (idempotent)", async () => {

@@ -89,8 +89,21 @@ export async function link(args: {
     console.log("Status changed from 'planned' to 'done' (tests linked)");
   }
 
-  // Clear AI assessment since test coverage changed
-  delete requirement.data.aiAssessment;
+  // Clear stale AI assessment data, but preserve suggested tests/scenarios
+  if (requirement.data.aiAssessment) {
+    const { suggestedTests, suggestedScenarios, assessedAt } = requirement.data.aiAssessment;
+    if (suggestedTests || suggestedScenarios) {
+      requirement.data.aiAssessment = {
+        sufficient: false,
+        notes: 'Assessment invalidated - test coverage changed',
+        assessedAt,
+        suggestedTests,
+        suggestedScenarios,
+      };
+    } else {
+      delete requirement.data.aiAssessment;
+    }
+  }
 
   // Save requirement file
   await saveRequirement(cwd, path, requirement.data);

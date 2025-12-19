@@ -64,8 +64,21 @@ export async function unlink(args: UnlinkArgs): Promise<void> {
   // Remove test link
   requirement.data.tests.splice(testIndex, 1);
 
-  // Clear AI assessment since test coverage changed
-  delete requirement.data.aiAssessment;
+  // Clear stale AI assessment data, but preserve suggested tests/scenarios
+  if (requirement.data.aiAssessment) {
+    const { suggestedTests, suggestedScenarios, assessedAt } = requirement.data.aiAssessment;
+    if (suggestedTests || suggestedScenarios) {
+      requirement.data.aiAssessment = {
+        sufficient: false,
+        notes: 'Assessment invalidated - test coverage changed',
+        assessedAt,
+        suggestedTests,
+        suggestedScenarios,
+      };
+    } else {
+      delete requirement.data.aiAssessment;
+    }
+  }
 
   // Save requirement
   await saveRequirement(cwd, path, requirement.data);
