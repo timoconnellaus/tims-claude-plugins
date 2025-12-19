@@ -48,8 +48,8 @@ describe("Assess Command", () => {
     await saveConfig(tempDir, { testRunner: "bun test", testGlob: "**/*.test.ts" });
 
     const requirement1: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "test.ts", identifier: "test", hash: "abc" }],
       status: "done",
     };
@@ -57,13 +57,40 @@ describe("Assess Command", () => {
     await saveRequirement(tempDir, "auth/REQ_login.yml", requirement1);
 
     const requirement2: Requirement = {
-      gherkin: "Given invalid password",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given invalid password\nWhen submitted\nThen error shown",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
 
     await saveRequirement(tempDir, "auth/REQ_password.yml", requirement2);
+  }
+
+  // Helper to create valid criteria object
+  function makePassingCriteria() {
+    return {
+      noBugsInTestCode: { result: "pass" },
+      sufficientCoverage: { result: "pass" },
+      meaningfulAssertions: { result: "pass" },
+      correctTestSubject: { result: "pass" },
+      happyPathCovered: { result: "pass" },
+      edgeCasesAddressed: { result: "pass" },
+      errorScenariosHandled: { result: "pass" },
+      wouldFailIfBroke: { result: "pass" },
+    };
+  }
+
+  function makeFailingCriteria() {
+    return {
+      noBugsInTestCode: { result: "pass" },
+      sufficientCoverage: { result: "fail", note: "No tests" },
+      meaningfulAssertions: { result: "na" },
+      correctTestSubject: { result: "na" },
+      happyPathCovered: { result: "fail" },
+      edgeCasesAddressed: { result: "na" },
+      errorScenariosHandled: { result: "na" },
+      wouldFailIfBroke: { result: "na" },
+    };
   }
 
   it("stores assessment with sufficient: true", async () => {
@@ -72,7 +99,7 @@ describe("Assess Command", () => {
     await assess({
       cwd: tempDir,
       path: "auth/REQ_login.yml",
-      resultJson: JSON.stringify({ sufficient: true, notes: "Good test coverage" }),
+      resultJson: JSON.stringify({ criteria: makePassingCriteria(), notes: "Good test coverage" }),
     });
 
     const content = await readFile(
@@ -93,7 +120,7 @@ describe("Assess Command", () => {
     await assess({
       cwd: tempDir,
       path: "auth/REQ_password.yml",
-      resultJson: JSON.stringify({ sufficient: false, notes: "No tests linked" }),
+      resultJson: JSON.stringify({ criteria: makeFailingCriteria(), notes: "No tests linked" }),
     });
 
     const content = await readFile(
@@ -113,7 +140,7 @@ describe("Assess Command", () => {
     await assess({
       cwd: tempDir,
       path: "auth/REQ_login.yml",
-      resultJson: JSON.stringify({ sufficient: true, notes: "Test" }),
+      resultJson: JSON.stringify({ criteria: makePassingCriteria(), notes: "Test" }),
     });
     const after = new Date();
 

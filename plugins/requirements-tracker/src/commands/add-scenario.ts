@@ -9,7 +9,16 @@ import {
   isValidRequirementPath,
 } from "../lib/store";
 import { parseGherkin, formatGherkin, validateGherkinStructure } from "../lib/gherkin";
-import type { Scenario } from "../lib/types";
+import type { Scenario, SourceType } from "../lib/types";
+
+const VALID_SOURCE_TYPES: SourceType[] = [
+  "doc",
+  "slack",
+  "email",
+  "meeting",
+  "ticket",
+  "manual",
+];
 
 export class AddScenarioError extends Error {
   constructor(message: string) {
@@ -24,8 +33,23 @@ export async function addScenario(args: {
   name: string; // scenario name (snake_case preferred)
   gherkin: string; // Given/When/Then scenario
   suggested?: boolean; // if true, marks as AI-suggested pending acceptance
+  // Optional source for the scenario
+  sourceType?: string;
+  sourceDesc?: string;
+  sourceUrl?: string;
+  sourceDate?: string;
 }): Promise<void> {
-  const { cwd, path, name, gherkin, suggested } = args;
+  const {
+    cwd,
+    path,
+    name,
+    gherkin,
+    suggested,
+    sourceType,
+    sourceDesc,
+    sourceUrl,
+    sourceDate,
+  } = args;
 
   // Validate path format
   if (!isValidRequirementPath(path)) {
@@ -37,6 +61,20 @@ export async function addScenario(args: {
   // Validate name
   if (!name || name.trim() === "") {
     throw new AddScenarioError("Scenario name cannot be empty.");
+  }
+
+  // Validate source type if provided
+  if (sourceType && !VALID_SOURCE_TYPES.includes(sourceType as SourceType)) {
+    throw new AddScenarioError(
+      `Invalid source type: ${sourceType}. Valid types: ${VALID_SOURCE_TYPES.join(", ")}`
+    );
+  }
+
+  // If sourceType is provided, sourceDesc is required
+  if (sourceType && !sourceDesc) {
+    throw new AddScenarioError(
+      "Source description (--source-desc) is required when source type is provided."
+    );
   }
 
   // Parse and auto-format gherkin (normalizes to one keyword per line)
@@ -87,6 +125,16 @@ export async function addScenario(args: {
     gherkin: formattedGherkin,
   };
 
+  // Add source if provided
+  if (sourceType && sourceDesc) {
+    newScenario.source = {
+      type: sourceType as SourceType,
+      description: sourceDesc,
+      url: sourceUrl,
+      date: sourceDate,
+    };
+  }
+
   // Only add suggested flag if true (keep YAML clean)
   if (suggested) {
     newScenario.suggested = true;
@@ -100,6 +148,15 @@ export async function addScenario(args: {
 
   console.log(`Added scenario: ${name}`);
   console.log(`  Requirement: ${path}`);
+  if (sourceType && sourceDesc) {
+    console.log(`  Source: ${sourceType} - ${sourceDesc}`);
+    if (sourceUrl) {
+      console.log(`  Source URL: ${sourceUrl}`);
+    }
+    if (sourceDate) {
+      console.log(`  Source Date: ${sourceDate}`);
+    }
+  }
   if (suggested) {
     console.log(`  Status: Suggested (pending acceptance)`);
   }

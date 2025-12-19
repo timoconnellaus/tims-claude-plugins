@@ -44,7 +44,7 @@ describe("Scenario Commands", () => {
   async function createRequirement(path: string, data: Partial<Requirement> = {}) {
     const requirement: Requirement = {
       gherkin: "Given a user\nWhen they login\nThen they are authenticated",
-      source: { type: "manual", description: "Test" },
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
       ...data,

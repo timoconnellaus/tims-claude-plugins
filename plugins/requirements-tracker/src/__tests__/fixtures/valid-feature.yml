@@ -7,7 +7,7 @@ requirements:
       Given a registered user
       When they enter valid credentials
       Then they should be logged in
-    source:
+    mainSource:
       type: doc
       description: "Auth PRD v1.0"
     tests:
@@ -24,7 +24,7 @@ requirements:
       Given an invalid password
       When the user attempts to login
       Then they should see an error message
-    source:
+    mainSource:
       type: manual
       description: "User request"
     tests: []

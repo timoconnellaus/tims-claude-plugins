@@ -48,7 +48,7 @@ describe("Link Command", () => {
 
     const requirement: Requirement = {
       gherkin: "Given a user\nWhen they login\nThen they are authenticated",
-      source: { type: "manual", description: "Test" },
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -57,8 +57,8 @@ describe("Link Command", () => {
 
     // Create a requirement with existing test
     const requirement2: Requirement = {
-      gherkin: "Given invalid password",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given invalid password\nWhen submitted\nThen error shown",
+      mainSource: { type: "manual", description: "Test" },
       tests: [
         { file: "existing.test.ts", identifier: "existing test", hash: "abc" },
       ],

@@ -19,6 +19,8 @@ import {
   REQUIREMENT_FILE_PATTERN,
   Priority,
   NFRCategory,
+  Source,
+  Scenario,
 } from "./types";
 
 // Valid values for validation
@@ -31,6 +33,37 @@ const VALID_NFR_CATEGORIES: NFRCategory[] = [
   "scalability",
   "other",
 ];
+
+// === Migration Helpers ===
+
+/**
+ * Migrate old requirement format (source at requirement level) to new format
+ * (mainSource for main gherkin, source on each scenario).
+ * Returns true if migration was performed.
+ */
+function migrateRequirementSource(data: Record<string, unknown>): boolean {
+  // Check if migration needed: has source but no mainSource
+  if (data.source && !data.mainSource) {
+    const oldSource = data.source as Source;
+
+    // Migrate main gherkin source
+    data.mainSource = oldSource;
+
+    // Migrate scenarios if they exist - copy source to each scenario without one
+    if (Array.isArray(data.scenarios)) {
+      data.scenarios = (data.scenarios as Scenario[]).map((scenario) => ({
+        ...scenario,
+        source: scenario.source ?? oldSource,
+      }));
+    }
+
+    // Remove old source field
+    delete data.source;
+
+    return true;
+  }
+  return false;
+}
 
 // === Path Helpers ===
 
@@ -159,6 +192,9 @@ export async function loadRequirement(
     const content = await readFile(fullPath, "utf-8");
     const data = parseYaml(content) as Requirement;
 
+    // Migrate old format (source at requirement level) to new format (mainSource)
+    migrateRequirementSource(data as unknown as Record<string, unknown>);
+
     // Ensure tests array exists
     if (!data.tests) {
       data.tests = [];
@@ -188,6 +224,20 @@ export async function loadRequirement(
       throw new RequirementValidationError(
         reqPath,
         'The "gherkin" field must include Given/When/Then keywords.'
+      );
+    }
+
+    // Validate required mainSource field
+    if (!data.mainSource || typeof data.mainSource !== "object") {
+      throw new RequirementValidationError(
+        reqPath,
+        'Missing required "mainSource" field. Every requirement must have a source for its main gherkin.'
+      );
+    }
+    if (!data.mainSource.type || !data.mainSource.description) {
+      throw new RequirementValidationError(
+        reqPath,
+        '"mainSource" must have "type" and "description" fields.'
       );
     }
 
@@ -323,7 +373,11 @@ export async function saveRequirement(
   const parentDir = dirname(fullPath);
   await mkdir(parentDir, { recursive: true });
 
-  await writeFile(fullPath, stringifyYaml(data));
+  // Remove deprecated source field before saving (ensure new format)
+  const cleanData = { ...data };
+  delete (cleanData as Record<string, unknown>).source;
+
+  await writeFile(fullPath, stringifyYaml(cleanData));
 }
 
 export interface LoadRequirementsResult {

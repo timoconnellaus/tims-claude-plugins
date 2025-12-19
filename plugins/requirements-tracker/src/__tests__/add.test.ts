@@ -67,10 +67,10 @@ describe("Add Command", () => {
     const data = parseYaml(content) as Requirement;
 
     expect(data.gherkin).toBe("Given a user\nWhen they login\nThen they are authenticated");
-    expect(data.source.type).toBe("manual");
-    expect(data.source.description).toBe("User story from PM");
-    expect(data.source.url).toBe("https://example.com/story");
-    expect(data.source.date).toBe("2024-01-01");
+    expect(data.mainSource.type).toBe("manual");
+    expect(data.mainSource.description).toBe("User story from PM");
+    expect(data.mainSource.url).toBe("https://example.com/story");
+    expect(data.mainSource.date).toBe("2024-01-01");
     expect(data.tests).toEqual([]);
   });
 
@@ -200,8 +200,8 @@ describe("Add Command", () => {
     const data = parseYaml(content) as Requirement;
 
     expect(data.gherkin).toBe("Given a different user\nWhen they login\nThen they are authenticated");
-    expect(data.source.type).toBe("doc");
-    expect(data.source.description).toBe("Second version");
+    expect(data.mainSource.type).toBe("doc");
+    expect(data.mainSource.description).toBe("Second version");
   });
 
   it("errors when not initialized", async () => {
@@ -240,7 +240,7 @@ describe("Add Command", () => {
       );
       const data = parseYaml(content) as Requirement;
 
-      expect(data.source.type).toBe(sourceType);
+      expect(data.mainSource.type).toBe(sourceType);
     }
   });
 
@@ -261,7 +261,7 @@ describe("Add Command", () => {
     );
     const data = parseYaml(content) as Requirement;
 
-    expect(data.source.url).toBeUndefined();
-    expect(data.source.date).toBeUndefined();
+    expect(data.mainSource.url).toBeUndefined();
+    expect(data.mainSource.date).toBeUndefined();
   });
 });

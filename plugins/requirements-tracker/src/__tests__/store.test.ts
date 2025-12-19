@@ -271,8 +271,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a user\nWhen they act\nThen result occurs",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -293,8 +293,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user logs in with valid credentials",
-        source: {
+        gherkin: "Given a user logs in with valid credentials\nWhen they submit the form\nThen they are authenticated",
+        mainSource: {
           type: "doc",
           description: "PRD v2.1",
           url: "https://example.com/prd",
@@ -338,8 +338,8 @@ describe("Store", () => {
       await writeFile(
         join(reqDir, "REQ_test.yml"),
         stringifyYaml({
-          gherkin: "Given a test",
-          source: { type: "manual", description: "Test" },
+          gherkin: "Given a test\nWhen run\nThen passes",
+          mainSource: { type: "manual", description: "Test" },
           status: "planned",
         })
       );
@@ -356,8 +356,8 @@ describe("Store", () => {
       await writeFile(
         join(reqDir, "REQ_invalid.yml"),
         stringifyYaml({
-          gherkin: "Given a test",
-          source: { type: "manual", description: "Test" },
+          gherkin: "Given a test\nWhen run\nThen passes",
+          mainSource: { type: "manual", description: "Test" },
         })
       );
 
@@ -370,8 +370,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a user\nWhen they act\nThen result occurs",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -385,8 +385,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a user\nWhen they act\nThen result occurs",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -407,8 +407,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a user\nWhen they act\nThen result occurs",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -424,8 +424,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const requirement: Requirement = {
-        gherkin: "Given a user",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a user\nWhen they act\nThen result occurs",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -455,15 +455,15 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const req1: Requirement = {
-        gherkin: "Given req1",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given req1\nWhen triggered\nThen completes",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
 
       const req2: Requirement = {
-        gherkin: "Given req2",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given req2\nWhen triggered\nThen completes",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -481,8 +481,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const req: Requirement = {
-        gherkin: "Given a requirement",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a requirement\nWhen evaluated\nThen verified",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -508,8 +508,8 @@ describe("Store", () => {
 
       // Create valid requirement
       const req: Requirement = {
-        gherkin: "Given a requirement",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a requirement\nWhen evaluated\nThen verified",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -530,8 +530,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const req: Requirement = {
-        gherkin: "Given a requirement",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a requirement\nWhen evaluated\nThen verified",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -557,8 +557,8 @@ describe("Store", () => {
 
       // Create valid requirement
       const validReq: Requirement = {
-        gherkin: "Given valid",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given valid\nWhen checked\nThen passes",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };
@@ -568,15 +568,15 @@ describe("Store", () => {
       await writeFile(
         join(reqDir, "REQ_invalid1.yml"),
         stringifyYaml({
-          gherkin: "Given invalid1",
-          source: { type: "manual", description: "Test" },
+          gherkin: "Given invalid1\nWhen checked\nThen fails",
+          mainSource: { type: "manual", description: "Test" },
         })
       );
       await writeFile(
         join(reqDir, "REQ_invalid2.yml"),
         stringifyYaml({
-          gherkin: "Given invalid2",
-          source: { type: "manual", description: "Test" },
+          gherkin: "Given invalid2\nWhen checked\nThen fails",
+          mainSource: { type: "manual", description: "Test" },
         })
       );
 
@@ -592,8 +592,8 @@ describe("Store", () => {
       await createRequirementsDir(tempDir);
 
       const req: Requirement = {
-        gherkin: "Given a requirement",
-        source: { type: "manual", description: "Test" },
+        gherkin: "Given a requirement\nWhen evaluated\nThen verified",
+        mainSource: { type: "manual", description: "Test" },
         tests: [],
         status: "done",
       };

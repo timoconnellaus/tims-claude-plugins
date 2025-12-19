@@ -142,13 +142,15 @@ export interface NFR {
 export interface Scenario {
   name: string; // Short identifier, e.g., "invalid_password", "rate_limited"
   gherkin: string; // Full Given/When/Then scenario (NO "Scenario:" prefix)
+  source?: Source; // Where this scenario came from (optional)
   suggested?: boolean; // True if AI-suggested, pending user acceptance
 }
 
 // Single requirement within a feature
 export interface Requirement {
   gherkin: string; // Gherkin-format requirement (Given/When/Then)
-  source: Source; // Where this requirement came from (REQUIRED)
+  mainSource: Source; // Where the main gherkin came from (REQUIRED)
+  source?: Source; // DEPRECATED: Kept for backward compat during migration
   tests: TestLink[]; // Linked tests (0 or more)
   status: ImplementationStatus; // Implementation status: "planned" or "done"
   questions?: Question[]; // Clarification questions

@@ -9,7 +9,7 @@ export interface RequirementWithData {
   unansweredQuestions: number;
   status: "planned" | "done";
   gherkin: string;
-  source: {
+  mainSource?: {
     type: "doc" | "slack" | "email" | "meeting" | "ticket" | "manual";
     description: string;
     url?: string;
@@ -76,6 +76,12 @@ export interface RequirementWithData {
     name: string;
     gherkin: string;
     suggested?: boolean;
+    source?: {
+      type: "doc" | "slack" | "email" | "meeting" | "ticket" | "manual";
+      description: string;
+      url?: string;
+      date?: string;
+    };
   }>;
 }
 

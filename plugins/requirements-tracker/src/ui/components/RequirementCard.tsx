@@ -25,7 +25,7 @@ interface RequirementData {
   unansweredQuestions: number;
   status: ImplementationStatus;
   gherkin: string;
-  source: Source;
+  mainSource?: Source;
   tests: TestLinkWithResult[];
   aiAssessment?: AIAssessment;
   questions?: Question[];
@@ -86,31 +86,27 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
             <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono">
               {requirement.gherkin}
             </pre>
-          </div>
-
-          <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Source</h4>
-            <div className="text-sm text-gray-600">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 mr-2">
-                {requirement.source.type}
-              </span>
-              {requirement.source.description}
-              {requirement.source.url && (
-                <a
-                  href={requirement.source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-blue-600 hover:underline"
-                >
-                  Link
-                </a>
-              )}
-              {requirement.source.date && (
-                <span className="ml-2 text-gray-400">
-                  ({requirement.source.date})
+            {requirement.mainSource && (
+              <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                  {requirement.mainSource.type}
                 </span>
-              )}
-            </div>
+                <span>{requirement.mainSource.description}</span>
+                {requirement.mainSource.url && (
+                  <a
+                    href={requirement.mainSource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    ↗
+                  </a>
+                )}
+                {requirement.mainSource.date && (
+                  <span className="text-gray-400">({requirement.mainSource.date})</span>
+                )}
+              </div>
+            )}
           </div>
 
           {requirement.tests.length > 0 && (

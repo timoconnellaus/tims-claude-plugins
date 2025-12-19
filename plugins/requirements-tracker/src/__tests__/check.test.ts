@@ -60,8 +60,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -81,8 +81,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -100,8 +100,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "test.ts", identifier: "test", hash: "abc" }],
       status: "done",
     };
@@ -133,8 +133,8 @@ describe("Check Command", () => {
     const testHash = tests.find(t => t.identifier === "test")?.hash || "abc";
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "verified.test.ts", identifier: "test", hash: testHash }],
       status: "done",
       aiAssessment: {
@@ -169,8 +169,8 @@ describe("Check Command", () => {
     );
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "stale.test.ts", identifier: "test", hash: "oldhash123" }],
       status: "done",
       aiAssessment: {
@@ -202,16 +202,16 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const untested: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
     await saveRequirement(tempDir, "auth/REQ_untested.yml", untested);
 
     const tested: Requirement = {
-      gherkin: "Given a password",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a password\nWhen submitted\nThen validated",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "test.ts", identifier: "test", hash: "abc" }],
       status: "done",
     };
@@ -230,16 +230,16 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const authReq: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
     await saveRequirement(tempDir, "auth/REQ_login.yml", authReq);
 
     const paymentsReq: Requirement = {
-      gherkin: "Given a payment",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a payment\nWhen processed\nThen confirmed",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -258,16 +258,16 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const req1: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
     await saveRequirement(tempDir, "auth/REQ_login.yml", req1);
 
     const req2: Requirement = {
-      gherkin: "Given a password",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a password\nWhen submitted\nThen validated",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -286,8 +286,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -317,8 +317,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -358,8 +358,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
     };
@@ -401,8 +401,8 @@ describe("Check Command", () => {
     );
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "update.test.ts", identifier: "test", hash: "oldhash" }],
       status: "done",
       // No aiAssessment
@@ -433,8 +433,8 @@ describe("Check Command", () => {
     await setupRequirements();
 
     const requirement: Requirement = {
-      gherkin: "Given a user",
-      source: { type: "manual", description: "Test" },
+      gherkin: "Given a user\nWhen they act\nThen result occurs",
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "done",
       questions: [

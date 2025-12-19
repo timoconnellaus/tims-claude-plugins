@@ -47,7 +47,7 @@ describe("Status Command", () => {
 
     const requirement: Requirement = {
       gherkin: "Given a user\nWhen they login\nThen authenticated",
-      source: { type: "manual", description: "Test" },
+      mainSource: { type: "manual", description: "Test" },
       tests: [],
       status: "planned",
     };
@@ -100,7 +100,7 @@ describe("Status Command", () => {
 
     const requirement: Requirement = {
       gherkin: "Given a user\nWhen they login\nThen authenticated",
-      source: { type: "manual", description: "Test" },
+      mainSource: { type: "manual", description: "Test" },
       tests: [{ file: "test.ts", identifier: "test", hash: "abc123" }],
       status: "planned",
     };

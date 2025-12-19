@@ -106,7 +106,7 @@ export async function add(args: AddArgs): Promise<void> {
   // Create requirement
   const requirement: Requirement = {
     gherkin: formattedGherkin,
-    source: {
+    mainSource: {
       type: sourceType as SourceType,
       description: sourceDesc,
       url: sourceUrl,

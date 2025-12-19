@@ -493,19 +493,24 @@ EXAMPLES:
 req add-scenario - Add a scenario to a requirement
 
 USAGE:
-  req add-scenario <path> --name "..." --gherkin "..." [--suggested]
+  req add-scenario <path> --name "..." --gherkin "..." [options]
 
 ARGUMENTS:
   <path>  Requirement path (e.g., auth/REQ_login.yml)
 
 OPTIONS:
-  --name       Short identifier for the scenario (e.g., "invalid_password")
-  --gherkin    Full Given/When/Then scenario text
-  --suggested  Mark as AI-suggested (pending acceptance)
+  --name          Short identifier for the scenario (e.g., "invalid_password")
+  --gherkin       Full Given/When/Then scenario text
+  --suggested     Mark as AI-suggested (pending acceptance)
+  --source-type   Source type: doc, slack, email, meeting, ticket, manual
+  --source-desc   Description of the source
+  --source-url    Optional URL to source
+  --source-date   Optional date (ISO format)
 
 EXAMPLES:
   req add-scenario auth/REQ_login.yml --name "invalid_password" --gherkin "Given user enters wrong password When they submit Then error is shown"
   req add-scenario auth/REQ_login.yml --name "rate_limited" --gherkin "Given user failed 5 times When they try again Then they are blocked" --suggested
+  req add-scenario auth/REQ_login.yml --name "edge_case" --gherkin "Given..." --source-type slack --source-desc "Feedback from @user"
           `.trim());
           if (!args.help && !args.h) process.exit(1);
           break;
@@ -517,6 +522,10 @@ EXAMPLES:
             name: args.name as string,
             gherkin: args.gherkin as string,
             suggested: !!args.suggested,
+            sourceType: args["source-type"] as string | undefined,
+            sourceDesc: args["source-desc"] as string | undefined,
+            sourceUrl: args["source-url"] as string | undefined,
+            sourceDate: args["source-date"] as string | undefined,
           });
         } catch (error) {
           console.error((error as Error).message);

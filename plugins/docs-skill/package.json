@@ -1,6 +1,6 @@
 {
   "name": "docs-skill",
-  "version": "4.2.9",
+  "version": "4.3.1",
   "type": "module",
   "bin": {
     "docs": "./src/cli.ts"

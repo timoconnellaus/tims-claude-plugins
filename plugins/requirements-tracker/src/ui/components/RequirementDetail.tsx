@@ -88,6 +88,27 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest,
               <pre className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap font-mono border border-gray-200">
                 {requirement.gherkin}
               </pre>
+              {requirement.mainSource && (
+                <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                    {requirement.mainSource.type}
+                  </span>
+                  <span>{requirement.mainSource.description}</span>
+                  {requirement.mainSource.url && (
+                    <a
+                      href={requirement.mainSource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      ↗
+                    </a>
+                  )}
+                  {requirement.mainSource.date && (
+                    <span className="text-gray-400">({requirement.mainSource.date})</span>
+                  )}
+                </div>
+              )}
               {hasScenarios && (
                 <ul className="mt-3 space-y-2">
                   {/* Actual scenarios (accepted or pending acceptance) */}
@@ -139,6 +160,27 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest,
                       }`}>
                         {scenario.gherkin}
                       </pre>
+                      {scenario.source && (
+                        <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                            {scenario.source.type}
+                          </span>
+                          <span>{scenario.source.description}</span>
+                          {scenario.source.url && (
+                            <a
+                              href={scenario.source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:underline"
+                            >
+                              ↗
+                            </a>
+                          )}
+                          {scenario.source.date && (
+                            <span className="text-gray-400">({scenario.source.date})</span>
+                          )}
+                        </div>
+                      )}
                     </li>
                   ))}
                   {/* Suggested scenarios from AI assessment (not yet added) */}
@@ -194,31 +236,6 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest,
             </>
           );
         })()}
-      </section>
-
-      <section className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Source</h3>
-        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-200">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700 mr-2">
-            {requirement.source.type}
-          </span>
-          {requirement.source.description}
-          {requirement.source.url && (
-            <a
-              href={requirement.source.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 text-blue-600 hover:underline"
-            >
-              Link
-            </a>
-          )}
-          {requirement.source.date && (
-            <span className="ml-2 text-gray-400">
-              ({requirement.source.date})
-            </span>
-          )}
-        </div>
       </section>
 
       {/* Dependencies - always show */}

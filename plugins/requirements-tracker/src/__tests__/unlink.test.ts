@@ -48,7 +48,7 @@ describe("Unlink Command", () => {
 
     const requirement: Requirement = {
       gherkin: "Given a user\nWhen they login\nThen they are authenticated",
-      source: { type: "manual", description: "Test" },
+      mainSource: { type: "manual", description: "Test" },
       tests: [
         { file: "auth.test.ts", identifier: "validates login", hash: "abc123" },
         { file: "auth.test.ts", identifier: "handles error", hash: "def456" },

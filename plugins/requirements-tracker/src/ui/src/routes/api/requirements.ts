@@ -116,7 +116,7 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
         dependencyIssues?: string[];
         unverifiedNFRCount: number;
         gherkin: string;
-        source: ParsedRequirement["data"]["source"];
+        mainSource: ParsedRequirement["data"]["mainSource"];
         tests: Array<TestLink & { isStale: boolean; lastResult?: TestResultStatus; lastRunAt?: string }>;
         aiAssessment: ParsedRequirement["data"]["aiAssessment"];
         questions: ParsedRequirement["data"]["questions"];
@@ -200,7 +200,7 @@ async function getRequirementsData(cwd: string): Promise<CheckResult | { error: 
         dependencyIssues: depIssues.length > 0 ? depIssues : undefined,
         unverifiedNFRCount,
         gherkin: req.data.gherkin,
-        source: req.data.source,
+        mainSource: req.data.mainSource,
         tests: testsWithStaleFlag,
         aiAssessment: req.data.aiAssessment,
         questions: req.data.questions,
