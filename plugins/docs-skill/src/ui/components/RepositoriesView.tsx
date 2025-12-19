@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { Repository } from "../app";
+import type { Repository } from "../types";
 
 interface Props {
   repositories: Repository[];

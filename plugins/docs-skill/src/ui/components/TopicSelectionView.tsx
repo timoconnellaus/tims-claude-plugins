@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { Repository, DocTreeNode, UserConfig, ParsedDoc } from "../app";
+import type { Repository, DocTreeNode, UserConfig, ParsedDoc } from "../types";
 
 interface Props {
   repositories: Repository[];
