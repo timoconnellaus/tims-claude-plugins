@@ -3,49 +3,58 @@
 /**
  * Switch to using installed (compiled) versions of the CLIs
  *
- * This removes the bun link symlinks, falling back to installed binaries in ~/.local/bin
+ * Removes symlinks from ~/.bun/bin and copies installed binaries from ~/.local/bin
  *
  * Usage: bun run use:installed
  */
 
-import { $ } from "bun";
 import { join } from "path";
+import { existsSync, unlinkSync, copyFileSync, lstatSync } from "fs";
 
-const ROOT = join(import.meta.dir, "..");
-const INSTALL_DIR = `${process.env.HOME}/.local/bin`;
+const BUN_BIN = join(process.env.HOME!, ".bun", "bin");
+const INSTALL_DIR = join(process.env.HOME!, ".local", "bin");
 
 const PLUGINS = [
-  { name: "requirements-tracker", dir: "plugins/requirements-tracker", bin: "req" },
-  { name: "docs-skill", dir: "plugins/docs-skill", bin: "docs" },
+  { name: "requirements-tracker", bin: "req" },
+  { name: "docs-skill", bin: "docs" },
 ];
 
 async function main() {
   console.log("Switching to installed CLIs...\n");
 
   for (const plugin of PLUGINS) {
-    const pluginDir = join(ROOT, plugin.dir);
-    console.log(`Unlinking ${plugin.name}...`);
+    const bunBinPath = join(BUN_BIN, plugin.bin);
+    const installedPath = join(INSTALL_DIR, plugin.bin);
+
+    console.log(`Restoring ${plugin.bin}...`);
 
     try {
-      // Remove bun link
-      await $`bun unlink`.cwd(pluginDir).quiet();
-      console.log(`  ✓ Unlinked ${plugin.name}`);
-    } catch {
-      console.log(`  - ${plugin.name} was not linked`);
-    }
+      // Check if installed binary exists
+      if (!existsSync(installedPath)) {
+        console.log(`  ⚠ No installed binary at ${installedPath}`);
+        console.log(`    Run the install script to download binaries.`);
+        continue;
+      }
 
-    // Check if installed binary exists
-    const installedPath = join(INSTALL_DIR, plugin.bin);
-    const exists = await Bun.file(installedPath).exists();
-    if (exists) {
-      console.log(`  ✓ Using installed binary: ${installedPath}`);
-    } else {
-      console.log(`  ⚠ No installed binary found at ${installedPath}`);
+      // Remove existing symlink/file in bun bin
+      if (existsSync(bunBinPath)) {
+        const stats = lstatSync(bunBinPath);
+        if (stats.isSymbolicLink()) {
+          console.log(`  - Removing symlink`);
+        }
+        unlinkSync(bunBinPath);
+      }
+
+      // Copy installed binary to bun bin
+      copyFileSync(installedPath, bunBinPath);
+      console.log(`  ✓ Copied ${installedPath} -> ${bunBinPath}`);
+    } catch (error) {
+      console.error(`  ✗ Failed to restore ${plugin.bin}: ${error}`);
     }
   }
 
   console.log("\nInstalled mode active.");
-  console.log(`CLIs run from: ${INSTALL_DIR}`);
+  console.log(`CLIs run from: ${BUN_BIN}`);
   console.log("\nIf binaries are not installed, run:");
   console.log("  curl -fsSL https://raw.githubusercontent.com/timoconnellaus/tims-claude-plugins/main/scripts/install.sh | bash");
   console.log("\nTo switch back to local development:");
