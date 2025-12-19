@@ -70,8 +70,10 @@ export function parseGherkin(input: string): GherkinParseResult {
     };
   }
 
+  // Convert literal \n sequences to actual newlines (from AI-generated text)
+  const unescaped = input.replace(/\\n/g, "\n");
   // Normalize whitespace (collapse multiple spaces/newlines)
-  const normalized = input.replace(/\s+/g, " ").trim();
+  const normalized = unescaped.replace(/\s+/g, " ").trim();
 
   // Find all keyword positions
   const matches: { keyword: string; index: number }[] = [];

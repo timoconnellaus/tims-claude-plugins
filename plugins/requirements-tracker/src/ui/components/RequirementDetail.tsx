@@ -1,6 +1,59 @@
+import { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import { StatusBadge, CoverageBadge } from "./StatusBadge";
 import type { RequirementWithData } from "./RequirementList";
-import { CRITERIA_KEYS, CRITERIA_LABELS, type VerificationCriteria } from "../../lib/types";
+import { CRITERIA_KEYS, CRITERIA_LABELS, type VerificationCriteria, type ImplementationStatus, type Priority } from "../../lib/types";
+
+function generatePrompt(requirement: RequirementWithData): string {
+  const parts: string[] = [];
+
+  parts.push("I need to implement tests for this requirement and link them using the requirements tracker.");
+  parts.push("");
+  parts.push("## Requirement");
+  parts.push(`@.requirements/${requirement.id}`);
+  parts.push("");
+
+  parts.push("## Primary Scenario");
+  parts.push("```gherkin");
+  parts.push(requirement.gherkin.trim());
+  parts.push("```");
+
+  const allScenarios = requirement.scenarios || [];
+  const suggestedFromAI = requirement.aiAssessment?.suggestedScenarios || [];
+
+  if (allScenarios.length > 0 || suggestedFromAI.length > 0) {
+    parts.push("");
+    parts.push("## Additional Scenarios");
+
+    for (const scenario of allScenarios) {
+      const status = scenario.suggested ? " (Pending Acceptance)" : "";
+      parts.push("");
+      parts.push(`### ${scenario.name}${status}`);
+      parts.push("```gherkin");
+      parts.push(scenario.gherkin.trim());
+      parts.push("```");
+    }
+
+    for (const ss of suggestedFromAI) {
+      parts.push("");
+      parts.push(`### ${ss.name} (AI Suggested)`);
+      parts.push("```gherkin");
+      parts.push(ss.gherkin.trim());
+      parts.push("```");
+    }
+  }
+
+  parts.push("");
+  parts.push("## Instructions");
+  parts.push("1. Write tests that cover all scenarios above");
+  parts.push("2. After writing each test, link it to this requirement:");
+  parts.push("   ```bash");
+  parts.push(`   req link ${requirement.id} <test-file>:<test-identifier>`);
+  parts.push("   ```");
+  parts.push(`3. Run \`req check ${requirement.id}\` to verify coverage`);
+
+  return parts.join("\n");
+}
 
 interface RequirementDetailProps {
   requirement: RequirementWithData | null;
@@ -14,9 +67,41 @@ interface RequirementDetailProps {
   onRunTest?: (file: string, identifier: string) => void;
   onRunAllTests?: (requirementPath: string) => void;
   runningTests?: Set<string>;
+  onUpdateRequirement?: (requirementPath: string, updates: { status?: ImplementationStatus; priority?: Priority | null }) => Promise<void>;
 }
 
-export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest, onAddScenario, onAcceptScenario, onRejectScenario, onRejectSuggestedScenario, onRunTest, onRunAllTests, runningTests }: RequirementDetailProps) {
+export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest, onAddScenario, onAcceptScenario, onRejectScenario, onRejectSuggestedScenario, onRunTest, onRunAllTests, runningTests, onUpdateRequirement }: RequirementDetailProps) {
+  const [copied, setCopied] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const handleStatusChange = async (newStatus: ImplementationStatus) => {
+    if (!requirement || !onUpdateRequirement || updating) return;
+    setUpdating(true);
+    try {
+      await onUpdateRequirement(requirement.id, { status: newStatus });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handlePriorityChange = async (newPriority: Priority | null) => {
+    if (!requirement || !onUpdateRequirement || updating) return;
+    setUpdating(true);
+    try {
+      await onUpdateRequirement(requirement.id, { priority: newPriority });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const copyPrompt = async () => {
+    if (!requirement) return;
+    const prompt = generatePrompt(requirement);
+    await navigator.clipboard.writeText(prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (!requirement) {
     return (
       <div className="h-full flex items-center justify-center text-gray-400">
@@ -29,28 +114,99 @@ export function RequirementDetail({ requirement, onVerify, onFixTest, onAddTest,
     <div className="h-full overflow-y-auto p-6">
       <div className="flex items-center gap-2 flex-wrap mb-4">
         <h2 className="font-mono text-lg text-gray-900">{requirement.id}</h2>
+        <button
+          onClick={copyPrompt}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          title="Copy prompt to clipboard"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5 text-green-600" />
+              <span className="text-green-600">Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" />
+              <span>Copy Prompt</span>
+            </>
+          )}
+        </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap mb-6">
-        <StatusBadge
-          status={requirement.status}
-          verification={requirement.verification}
-        />
-        <CoverageBadge sufficient={requirement.coverageSufficient} />
-        {/* Priority badge - always show */}
-        {requirement.priority ? (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-            requirement.priority === "critical" ? "bg-red-100 text-red-800" :
-            requirement.priority === "high" ? "bg-orange-100 text-orange-800" :
-            requirement.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
-            "bg-gray-100 text-gray-700"
-          }`}>
-            {requirement.priority.charAt(0).toUpperCase() + requirement.priority.slice(1)}
-          </span>
+        {/* Status dropdown */}
+        {onUpdateRequirement ? (
+          <select
+            value={requirement.status}
+            onChange={(e) => handleStatusChange(e.target.value as ImplementationStatus)}
+            disabled={updating}
+            className={`text-xs font-medium rounded px-2 py-1 border-0 cursor-pointer transition-colors disabled:opacity-50 ${
+              requirement.status === "done"
+                ? "bg-blue-100 text-blue-800"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <option value="planned">Planned</option>
+            <option value="done">Done</option>
+          </select>
         ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400 border border-dashed border-gray-300">
-            No priority
+          <StatusBadge
+            status={requirement.status}
+            verification={requirement.verification}
+          />
+        )}
+        {/* Verification badge (read-only) */}
+        {requirement.verification === "verified" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+            Verified
           </span>
+        )}
+        {requirement.verification === "unverified" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+            Unverified
+          </span>
+        )}
+        {requirement.verification === "stale" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+            Stale
+          </span>
+        )}
+        <CoverageBadge sufficient={requirement.coverageSufficient} />
+        {/* Priority dropdown */}
+        {onUpdateRequirement ? (
+          <select
+            value={requirement.priority || ""}
+            onChange={(e) => handlePriorityChange(e.target.value ? e.target.value as Priority : null)}
+            disabled={updating}
+            className={`text-xs font-medium rounded px-2 py-1 border-0 cursor-pointer transition-colors disabled:opacity-50 ${
+              requirement.priority === "critical" ? "bg-red-100 text-red-800" :
+              requirement.priority === "high" ? "bg-orange-100 text-orange-800" :
+              requirement.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
+              requirement.priority === "low" ? "bg-gray-100 text-gray-700" :
+              "bg-gray-100 text-gray-400"
+            }`}
+          >
+            <option value="">No priority</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        ) : (
+          requirement.priority ? (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+              requirement.priority === "critical" ? "bg-red-100 text-red-800" :
+              requirement.priority === "high" ? "bg-orange-100 text-orange-800" :
+              requirement.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
+              "bg-gray-100 text-gray-700"
+            }`}>
+              {requirement.priority.charAt(0).toUpperCase() + requirement.priority.slice(1)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-400 border border-dashed border-gray-300">
+              No priority
+            </span>
+          )
         )}
         {requirement.unansweredQuestions > 0 && (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">

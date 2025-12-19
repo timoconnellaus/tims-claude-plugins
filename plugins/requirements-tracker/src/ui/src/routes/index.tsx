@@ -11,7 +11,7 @@ import type {
   GroupWithData,
   RequirementWithData,
 } from "../../components/RequirementList";
-import type { CheckSummary, ExtractedTest } from "../../../lib/types";
+import type { CheckSummary, ExtractedTest, ImplementationStatus, Priority } from "../../../lib/types";
 
 // Search params schema using TanStack Router's approach
 const searchSchema = z.object({
@@ -546,6 +546,30 @@ req reject-scenario ${req.id} ${scenarioName}
     }
   }, []);
 
+  // Handle updating requirement priority or status
+  const handleUpdateRequirement = useCallback(async (
+    requirementPath: string,
+    updates: { status?: ImplementationStatus; priority?: Priority | null }
+  ) => {
+    try {
+      const response = await fetch('/api/update-requirement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: requirementPath,
+          ...updates,
+        }),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        console.error('Failed to update requirement:', result.error);
+      }
+      // SSE will trigger refresh automatically
+    } catch (err) {
+      console.error('Failed to update requirement:', err);
+    }
+  }, []);
+
   const filteredCount = filteredGroups.reduce(
     (acc, g) => acc + g.requirements.length,
     0
@@ -747,6 +771,7 @@ req reject-scenario ${req.id} ${scenarioName}
                 onRunTest={handleRunTest}
                 onRunAllTests={handleRunAllTests}
                 runningTests={runningTests}
+                onUpdateRequirement={handleUpdateRequirement}
               />
             </div>
 

@@ -8,6 +8,7 @@ import {
   saveRequirement,
 } from "../lib/store";
 import { getTestsWithCache } from "../lib/cache";
+import { parseGherkin, validateGherkinStructure } from "../lib/gherkin";
 import type {
   AIAssessment,
   TestComment,
@@ -128,7 +129,8 @@ export async function assess(args: {
       if (!Array.isArray(parsed.suggestedScenarios)) {
         throw new Error("suggestedScenarios must be an array");
       }
-      for (const ss of parsed.suggestedScenarios) {
+      for (let i = 0; i < parsed.suggestedScenarios.length; i++) {
+        const ss = parsed.suggestedScenarios[i];
         if (
           typeof ss.name !== "string" ||
           typeof ss.gherkin !== "string" ||
@@ -137,6 +139,15 @@ export async function assess(args: {
           throw new Error(
             "suggestedScenarios entries must have name, gherkin, and rationale strings"
           );
+        }
+        // Validate gherkin structure
+        const parseResult = parseGherkin(ss.gherkin);
+        if (!parseResult.success) {
+          throw new Error(`suggestedScenarios[${i}].gherkin is invalid: ${parseResult.error}`);
+        }
+        const structureResult = validateGherkinStructure(parseResult.steps);
+        if (!structureResult.valid) {
+          throw new Error(`suggestedScenarios[${i}].gherkin structure is invalid: ${structureResult.errors.join(", ")}`);
         }
       }
     }

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiUpdateRequirementRouteImport } from './routes/api/update-requirement'
 import { Route as ApiRunTestRouteImport } from './routes/api/run-test'
 import { Route as ApiRequirementsRouteImport } from './routes/api/requirements'
 import { Route as ApiRejectSuggestedScenarioRouteImport } from './routes/api/reject-suggested-scenario'
@@ -22,6 +23,11 @@ import { Route as ApiDocsSlugRouteImport } from './routes/api/docs.$slug'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUpdateRequirementRoute = ApiUpdateRequirementRouteImport.update({
+  id: '/api/update-requirement',
+  path: '/api/update-requirement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRunTestRoute = ApiRunTestRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/api/reject-suggested-scenario': typeof ApiRejectSuggestedScenarioRoute
   '/api/requirements': typeof ApiRequirementsRoute
   '/api/run-test': typeof ApiRunTestRoute
+  '/api/update-requirement': typeof ApiUpdateRequirementRoute
   '/api/docs/$slug': typeof ApiDocsSlugRoute
   '/api/docs': typeof ApiDocsIndexRoute
 }
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/api/reject-suggested-scenario': typeof ApiRejectSuggestedScenarioRoute
   '/api/requirements': typeof ApiRequirementsRoute
   '/api/run-test': typeof ApiRunTestRoute
+  '/api/update-requirement': typeof ApiUpdateRequirementRoute
   '/api/docs/$slug': typeof ApiDocsSlugRoute
   '/api/docs': typeof ApiDocsIndexRoute
 }
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/api/reject-suggested-scenario': typeof ApiRejectSuggestedScenarioRoute
   '/api/requirements': typeof ApiRequirementsRoute
   '/api/run-test': typeof ApiRunTestRoute
+  '/api/update-requirement': typeof ApiUpdateRequirementRoute
   '/api/docs/$slug': typeof ApiDocsSlugRoute
   '/api/docs/': typeof ApiDocsIndexRoute
 }
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/api/reject-suggested-scenario'
     | '/api/requirements'
     | '/api/run-test'
+    | '/api/update-requirement'
     | '/api/docs/$slug'
     | '/api/docs'
   fileRoutesByTo: FileRoutesByTo
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/api/reject-suggested-scenario'
     | '/api/requirements'
     | '/api/run-test'
+    | '/api/update-requirement'
     | '/api/docs/$slug'
     | '/api/docs'
   id:
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/api/reject-suggested-scenario'
     | '/api/requirements'
     | '/api/run-test'
+    | '/api/update-requirement'
     | '/api/docs/$slug'
     | '/api/docs/'
   fileRoutesById: FileRoutesById
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   ApiRejectSuggestedScenarioRoute: typeof ApiRejectSuggestedScenarioRoute
   ApiRequirementsRoute: typeof ApiRequirementsRoute
   ApiRunTestRoute: typeof ApiRunTestRoute
+  ApiUpdateRequirementRoute: typeof ApiUpdateRequirementRoute
   ApiDocsSlugRoute: typeof ApiDocsSlugRoute
   ApiDocsIndexRoute: typeof ApiDocsIndexRoute
 }
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/update-requirement': {
+      id: '/api/update-requirement'
+      path: '/api/update-requirement'
+      fullPath: '/api/update-requirement'
+      preLoaderRoute: typeof ApiUpdateRequirementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/run-test': {
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRejectSuggestedScenarioRoute: ApiRejectSuggestedScenarioRoute,
   ApiRequirementsRoute: ApiRequirementsRoute,
   ApiRunTestRoute: ApiRunTestRoute,
+  ApiUpdateRequirementRoute: ApiUpdateRequirementRoute,
   ApiDocsSlugRoute: ApiDocsSlugRoute,
   ApiDocsIndexRoute: ApiDocsIndexRoute,
 }

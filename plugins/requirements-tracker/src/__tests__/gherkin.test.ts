@@ -104,6 +104,30 @@ describe("Gherkin Parser", () => {
       }
     });
 
+    it("handles escaped newlines from AI-generated text", () => {
+      // AI may output literal \n sequences instead of actual newlines
+      const result = parseGherkin(
+        "Given an entity with 10 fields\\nWhen only 2 fields are modified\\nThen the audit log changes should only contain the 2 modified fields"
+      );
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.steps).toHaveLength(3);
+        expect(result.steps[0]).toEqual({
+          keyword: "Given",
+          text: "an entity with 10 fields",
+        });
+        expect(result.steps[1]).toEqual({
+          keyword: "When",
+          text: "only 2 fields are modified",
+        });
+        expect(result.steps[2]).toEqual({
+          keyword: "Then",
+          text: "the audit log changes should only contain the 2 modified fields",
+        });
+      }
+    });
+
     it("returns error for empty input", () => {
       const result = parseGherkin("");
       expect(result.success).toBe(false);
